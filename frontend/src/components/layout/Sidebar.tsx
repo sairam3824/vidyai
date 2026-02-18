@@ -9,11 +9,10 @@ import {
   User,
   LogOut,
   GraduationCap,
-  ChevronRight,
+  TrendingUp,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
-import { Badge } from '@/components/ui/Badge'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -25,22 +24,23 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
+  const initials = (user?.full_name ?? user?.email ?? 'U')[0].toUpperCase()
 
   return (
-    <aside className="flex flex-col w-64 shrink-0 bg-white border-r border-gray-200 min-h-screen">
+    <aside className="flex flex-col w-64 shrink-0 bg-[#0A0C14] border-r border-white/[0.05] min-h-screen">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-6 h-16 border-b border-gray-200">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-600 shrink-0">
-          <GraduationCap className="h-4.5 w-4.5 text-white" strokeWidth={2} />
+      <div className="flex items-center gap-2.5 px-5 h-16 border-b border-white/[0.05]">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500 shadow-lg shadow-blue-500/30 shrink-0">
+          <GraduationCap className="h-4 w-4 text-white" strokeWidth={2.5} />
         </div>
-        <div>
-          <span className="text-base font-bold text-gray-900">Vidyai</span>
-          <Badge variant="purple" className="ml-2 text-[10px] py-0">BETA</Badge>
-        </div>
+        <span className="text-base font-bold text-white tracking-tight">Vidyai</span>
+        <span className="ml-auto text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-1.5 py-0.5 rounded-md tracking-wide">
+          BETA
+        </span>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-5 space-y-0.5">
+      <nav className="flex-1 px-3 py-4 space-y-0.5">
         {navItems.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href || pathname.startsWith(href + '/')
           return (
@@ -48,22 +48,20 @@ export function Sidebar() {
               key={href}
               href={href}
               className={cn(
-                'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150',
+                'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-150',
                 isActive
-                  ? 'bg-indigo-50 text-indigo-700'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                  ? 'bg-blue-500/15 text-blue-300 border border-blue-500/25'
+                  : 'text-gray-500 hover:bg-white/[0.05] hover:text-gray-200 border border-transparent',
               )}
             >
               <Icon
                 className={cn(
-                  'h-5 w-5 shrink-0',
-                  isActive ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600',
+                  'h-4.5 w-4.5 shrink-0 transition-colors',
+                  isActive ? 'text-blue-400' : 'text-gray-600 group-hover:text-gray-300',
                 )}
               />
               <span className="flex-1">{label}</span>
-              {isActive && (
-                <ChevronRight className="h-4 w-4 text-indigo-400 ml-auto" />
-              )}
+              {isActive && <span className="h-1.5 w-1.5 rounded-full bg-blue-400 shrink-0" />}
             </Link>
           )
         })}
@@ -71,30 +69,35 @@ export function Sidebar() {
 
       {/* Upgrade banner */}
       {user?.subscription_tier === 'free' && (
-        <div className="mx-3 mb-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 p-4 ring-1 ring-indigo-100">
-          <p className="text-xs font-semibold text-indigo-700">Free Plan</p>
-          <p className="text-xs text-gray-600 mt-0.5">3 tests/week</p>
-          <button className="mt-2.5 w-full text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg py-1.5 transition-colors">
-            Upgrade →
+        <div className="mx-3 mb-4 rounded-2xl bg-gradient-to-b from-blue-600/20 to-blue-900/20 border border-blue-500/20 p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp className="h-4 w-4 text-blue-400" />
+            <p className="text-xs font-bold text-white">Unlock More Tests</p>
+          </div>
+          <p className="text-xs text-gray-500 mb-3 leading-snug">
+            Free plan · 3 tests/week limit
+          </p>
+          <button className="w-full text-xs font-bold text-white bg-blue-500 hover:bg-blue-400 rounded-xl py-2.5 transition-colors shadow-lg shadow-blue-500/20">
+            Upgrade plan →
           </button>
         </div>
       )}
 
       {/* User section */}
-      <div className="border-t border-gray-200 px-3 py-3">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-lg">
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-semibold text-sm shrink-0">
-            {(user?.full_name ?? user?.email ?? 'U')[0].toUpperCase()}
+      <div className="border-t border-white/[0.05] px-3 py-3">
+        <div className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.04] transition-colors">
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white font-bold text-sm shrink-0 shadow-md shadow-blue-500/25">
+            {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
+            <p className="text-sm font-semibold text-gray-200 truncate">
               {user?.full_name ?? 'Student'}
             </p>
-            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+            <p className="text-xs text-gray-600 truncate">{user?.email}</p>
           </div>
           <button
             onClick={logout}
-            className="text-gray-400 hover:text-red-500 transition-colors"
+            className="text-gray-700 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-red-400/10"
             title="Sign out"
           >
             <LogOut className="h-4 w-4" />
