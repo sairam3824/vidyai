@@ -39,8 +39,8 @@ export default function LandingPage() {
                 key={label}
                 href={`#${label.toLowerCase()}`}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${active
-                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                    : 'text-gray-400 hover:text-white hover:bg-white/[0.06]'
+                  ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                  : 'text-gray-400 hover:text-white hover:bg-white/[0.06]'
                   }`}
               >
                 {label}
@@ -80,14 +80,7 @@ export default function LandingPage() {
           <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-blue-400/6 blur-[80px]" />
 
           {/* Grid overlay */}
-          <div
-            className="absolute inset-0 opacity-[0.035]"
-            style={{
-              backgroundImage:
-                'linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px)',
-              backgroundSize: '72px 72px',
-            }}
-          />
+
           {/* Radial vignette */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,transparent_40%,#06080F_100%)]" />
         </div>
@@ -136,32 +129,7 @@ export default function LandingPage() {
                 </Link>
               </div>
 
-              <p className="mt-5 text-sm text-gray-600">
-                Free forever · No card required · 3 tests/week on free plan
-              </p>
 
-              {/* Rating row */}
-              <div className="mt-10 flex items-center gap-6 pt-8 border-t border-white/[0.06]">
-                <div>
-                  <div className="flex items-center gap-0.5 mb-1">
-                    {[1, 2, 3, 4, 5].map(s => (
-                      <Star key={s} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <p className="text-2xl font-black text-white">4.8</p>
-                  <p className="text-xs text-gray-500">By students nationwide</p>
-                </div>
-                <div className="w-px h-12 bg-white/10" />
-                <div>
-                  <div className="flex -space-x-2 mb-1">
-                    {['bg-blue-400', 'bg-emerald-400', 'bg-amber-400', 'bg-rose-400', 'bg-sky-400'].map((c, i) => (
-                      <div key={i} className={`w-7 h-7 rounded-full ${c} border-2 border-[#06080F]`} />
-                    ))}
-                  </div>
-                  <p className="text-2xl font-black text-white">60k+</p>
-                  <p className="text-xs text-gray-500">Students learning</p>
-                </div>
-              </div>
             </div>
 
             {/* Right: Visual — mock dashboard card */}
@@ -380,8 +348,8 @@ export default function LandingPage() {
               <div
                 key={plan.name}
                 className={`relative rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 ${plan.highlight
-                    ? 'bg-blue-500/[0.08] border-2 border-blue-500/50 shadow-[0_0_60px_rgba(59,130,246,0.15)] scale-[1.03]'
-                    : 'bg-white/[0.02] border border-white/[0.07] hover:border-white/[0.14]'
+                  ? 'bg-blue-500/[0.08] border-2 border-blue-500/50 shadow-[0_0_60px_rgba(59,130,246,0.15)] scale-[1.03]'
+                  : 'bg-white/[0.02] border border-white/[0.07] hover:border-white/[0.14]'
                   }`}
               >
                 {plan.highlight && (
@@ -412,8 +380,8 @@ export default function LandingPage() {
                 <Link
                   href="/register"
                   className={`block w-full text-center rounded-xl py-3 text-sm font-bold transition-all duration-200 ${plan.highlight
-                      ? 'bg-blue-500 hover:bg-blue-400 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50'
-                      : 'bg-white/[0.06] hover:bg-white/[0.1] text-white border border-white/[0.08]'
+                    ? 'bg-blue-500 hover:bg-blue-400 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50'
+                    : 'bg-white/[0.06] hover:bg-white/[0.1] text-white border border-white/[0.08]'
                     }`}
                 >
                   {plan.cta}
@@ -437,11 +405,15 @@ export default function LandingPage() {
             © {new Date().getFullYear()} Vidyai. Built for CBSE students across India.
           </p>
           <div className="flex items-center gap-5">
-            {['Privacy', 'Terms', 'Contact'].map((item) => (
-              <a key={item} href="#" className="text-xs text-gray-600 hover:text-gray-300 transition-colors">
-                {item}
-              </a>
-            ))}
+            <Link href="/privacy" className="text-xs text-gray-600 hover:text-gray-300 transition-colors">
+              Privacy
+            </Link>
+            <Link href="/terms" className="text-xs text-gray-600 hover:text-gray-300 transition-colors">
+              Terms
+            </Link>
+            <Link href="/contact" className="text-xs text-gray-600 hover:text-gray-300 transition-colors">
+              Contact
+            </Link>
           </div>
         </div>
       </footer>
