@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     EMBEDDING_DIMENSIONS: int = 1536
     RAG_TOP_K: int = 6
 
+    # ── Cache ────────────────────────────────────────────────────────────────
+    REDIS_URL: str = "redis://localhost:6379/0"
+    CACHE_TTL_SECONDS: int = 604800       # 7 days
+
     # ── Storage ──────────────────────────────────────────────────────────────
     STORAGE_MODE: str = "local"           # "local" | "s3"
     LOCAL_STORAGE_PATH: str = "./storage"

@@ -19,6 +19,7 @@ from app.models import (  # noqa: F401
     Chapter,
     Class,
     GeneratedTest,
+    QuestionCache,
     Subject,
     TextChunk,
     UsageTracking,

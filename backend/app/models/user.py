@@ -26,7 +26,7 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
     subscription_tier = Column(
-        Enum(SubscriptionTier),
+        Enum(SubscriptionTier, values_callable=lambda x: [e.value for e in x]),
         default=SubscriptionTier.FREE,
         nullable=False,
     )
