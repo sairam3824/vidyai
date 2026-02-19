@@ -8,12 +8,18 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.models.text_chunk import TextChunk
+from app.services.cache_service import cache
 
 logger = logging.getLogger(__name__)
 
 
 class RAGService:
-    """Retrieval-Augmented Generation: embed query → fetch similar chunks."""
+    """Retrieval-Augmented Generation: embed query → fetch similar chunks.
+
+    retrieve_context() is the recommended entry point — it caches the built
+    context string in Redis so repeated calls for the same chapter skip both
+    the OpenAI embedding call and the pgvector similarity search.
+    """
 
     def __init__(self, db: Session) -> None:
         self.db = db
@@ -62,6 +68,33 @@ class RAGService:
         )
         logger.info(f"RAG: retrieved {len(results)} chunks for chapter {chapter_id}")
         return results
+
+    # ── Cached context (preferred entry point) ────────────────────────────
+
+    def retrieve_context(self, chapter_id: int, query: str) -> str:
+        """Return the RAG context string, using Redis cache when available.
+
+        Cache key: rag_ctx:{chapter_id}:{md5(query)}
+        TTL      : settings.CACHE_TTL_SECONDS (default 7 days)
+
+        On a cache hit the OpenAI embedding API and pgvector search are
+        both skipped entirely, reducing latency and API cost.
+        """
+        cache_key = cache.rag_context_key(chapter_id, query)
+
+        cached_context = cache.get(cache_key)
+        if cached_context is not None:
+            logger.info("RAG cache HIT for chapter %d", chapter_id)
+            return cached_context
+
+        logger.info("RAG cache MISS for chapter %d — fetching from DB", chapter_id)
+        chunks = self.retrieve(chapter_id, query)
+        context = self.build_context(chunks) if chunks else ""
+
+        if context:
+            cache.set(cache_key, context)
+
+        return context
 
     # ── Context builder ───────────────────────────────────────────────────
 

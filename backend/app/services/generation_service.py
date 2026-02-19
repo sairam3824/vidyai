@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 
 from openai import OpenAI
@@ -12,6 +12,7 @@ from app.config import settings
 from app.core.exceptions import GenerationError, NotFoundError
 from app.models.board import Chapter
 from app.models.generated_test import GeneratedTest
+from app.models.question_cache import QuestionCache
 from app.models.user import User
 from app.schemas.test import (
     AnswerDetail,
@@ -81,24 +82,47 @@ class GenerationService:
         # Enforce usage limit first (raises on exceeded)
         self.usage.check_and_increment(user)
 
-        # RAG retrieval
-        query = (
-            f"Key concepts, theorems, formulas and important topics "
-            f"in {chapter.chapter_name}"
-        )
-        chunks = self.rag.retrieve(chapter.id, query)
-        context = (
-            self.rag.build_context(chunks)
-            if chunks
-            else f"Chapter: {chapter.chapter_name}"
+        # ── Strategy 1: DB question cache ─────────────────────────────────
+        # Check if a valid cached question set exists for this
+        # (chapter, num_questions) pair — shared across all users.
+        questions_json = self._get_cached_questions(
+            chapter.id, request.num_questions
         )
 
-        questions_json = self._call_openai(
-            context=context,
-            chapter_name=chapter.chapter_name,
-            num_questions=request.num_questions,
-        )
+        if questions_json is not None:
+            logger.info(
+                "Question cache HIT: chapter=%d num_q=%d — skipping OpenAI",
+                chapter.id,
+                request.num_questions,
+            )
+        else:
+            logger.info(
+                "Question cache MISS: chapter=%d num_q=%d — generating",
+                chapter.id,
+                request.num_questions,
+            )
 
+            # ── Strategy 2: Redis RAG context cache ───────────────────────
+            # retrieve_context() caches the embedding + vector search result
+            # in Redis, skipping the OpenAI embed call on subsequent requests.
+            rag_query = (
+                f"Key concepts, theorems, formulas and important topics "
+                f"in {chapter.chapter_name}"
+            )
+            context = self.rag.retrieve_context(chapter.id, rag_query)
+            if not context:
+                context = f"Chapter: {chapter.chapter_name}"
+
+            questions_json = self._call_openai(
+                context=context,
+                chapter_name=chapter.chapter_name,
+                num_questions=request.num_questions,
+            )
+
+            # Store in DB question cache for future requests
+            self._store_cached_questions(chapter.id, request.num_questions, questions_json)
+
+        # Always create a per-user GeneratedTest record (for score tracking)
         test = GeneratedTest(
             user_id=user.id,
             chapter_id=chapter.id,
@@ -181,6 +205,58 @@ class GenerationService:
             correct_answers=correct_count,
             details=details,
         )
+
+    # ── Question cache helpers ─────────────────────────────────────────────
+
+    def _get_cached_questions(
+        self, chapter_id: int, num_questions: int
+    ) -> Dict[str, Any] | None:
+        """Return questions_json from DB cache if a non-expired entry exists."""
+        now = datetime.now(timezone.utc)
+        entry = (
+            self.db.query(QuestionCache)
+            .filter(
+                QuestionCache.chapter_id == chapter_id,
+                QuestionCache.num_questions == num_questions,
+                QuestionCache.expires_at > now,
+            )
+            .first()
+        )
+        return entry.questions_json if entry else None
+
+    def _store_cached_questions(
+        self, chapter_id: int, num_questions: int, questions_json: Dict[str, Any]
+    ) -> None:
+        """Upsert a question cache entry with a fresh TTL."""
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            seconds=settings.CACHE_TTL_SECONDS
+        )
+        existing = (
+            self.db.query(QuestionCache)
+            .filter(
+                QuestionCache.chapter_id == chapter_id,
+                QuestionCache.num_questions == num_questions,
+            )
+            .first()
+        )
+        if existing:
+            existing.questions_json = questions_json
+            existing.expires_at = expires_at
+        else:
+            self.db.add(
+                QuestionCache(
+                    chapter_id=chapter_id,
+                    num_questions=num_questions,
+                    questions_json=questions_json,
+                    expires_at=expires_at,
+                )
+            )
+        try:
+            self.db.commit()
+        except Exception as exc:
+            # Race condition: another request inserted simultaneously — harmless
+            self.db.rollback()
+            logger.warning("Question cache upsert skipped (race condition): %s", exc)
 
     # ── Helpers ───────────────────────────────────────────────────────────
 
