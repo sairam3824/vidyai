@@ -30,7 +30,7 @@ export function useAuth() {
 
   const logout = useCallback(() => {
     clearAuth()
-    router.push('/login')
+    router.push('/')
   }, [clearAuth, router])
 
   return { user, token, isAuthenticated, login, register, logout }
