@@ -8,6 +8,21 @@ version: "3.9"
 #   docker compose down -v   (destroys volumes)
 
 services:
+  # ── Redis (cache) ──────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: vidyai-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   # ── PostgreSQL + pgvector ──────────────────────────────────────────────────
   db:
     image: pgvector/pgvector:pg16
@@ -37,10 +52,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file:
       - ./backend/.env
     environment:
       DATABASE_URL: postgresql://edusaas:edusaas@db:5432/edusaas
+      REDIS_URL: redis://redis:6379/0
       STORAGE_MODE: local
       LOCAL_STORAGE_PATH: /app/storage
     ports:
@@ -70,3 +88,4 @@ services:
 volumes:
   pgdata:
   storage_data:
+  redisdata:

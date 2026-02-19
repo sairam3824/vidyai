@@ -8,6 +8,9 @@ version: "3.9"
 # The frontend points to your API Gateway or ALB domain.
 
 services:
+  redis:
+    restart: always
+
   backend:
     restart: always
     command: >
