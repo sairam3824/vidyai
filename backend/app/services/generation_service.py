@@ -197,9 +197,11 @@ class GenerationService:
     ) -> SubmitTestResponse:
         test = self._get_owned_test(test_id, user_id)
 
-        questions = test.questions_json.get("questions", [])
+        questions_payload = test.questions_json if isinstance(test.questions_json, dict) else {}
+        questions = questions_payload.get("questions", [])
         correct_count = 0
         details: List[AnswerDetail] = []
+        updated_questions: List[Dict[str, Any]] = []
 
         for q in questions:
             q_id = str(q["id"])
@@ -207,6 +209,7 @@ class GenerationService:
             is_correct = user_answer == q["correct_answer"]
             if is_correct:
                 correct_count += 1
+            updated_questions.append({**q, "user_answer": user_answer})
             details.append(
                 AnswerDetail(
                     question_id=q["id"],
@@ -218,8 +221,9 @@ class GenerationService:
                 )
             )
 
-        total = len(questions)
+        total = len(updated_questions)
         score = round((correct_count / total * 100) if total else 0, 2)
+        test.questions_json = {**questions_payload, "questions": updated_questions}
         test.score = score
         test.completed_at = datetime.now(timezone.utc)
         self.db.commit()

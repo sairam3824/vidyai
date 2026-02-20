@@ -61,6 +61,7 @@ export interface MCQQuestion {
   options: MCQOption[]
   correct_answer: string
   explanation: string
+  user_answer?: string | null
 }
 
 export interface QuestionsPayload {

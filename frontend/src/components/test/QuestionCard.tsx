@@ -9,7 +9,7 @@ interface QuestionCardProps {
   selectedAnswer?: string
   onAnswer: (questionId: number, key: string) => void
   showResult?: boolean
-  userAnswer?: string
+  userAnswer?: string | null
   disabled?: boolean
 }
 
@@ -22,6 +22,20 @@ export function QuestionCard({
   userAnswer,
   disabled,
 }: QuestionCardProps) {
+  const resolvedUserAnswer = userAnswer ?? selectedAnswer
+  const selectedOption = question.options.find((opt) => opt.key === resolvedUserAnswer)
+  const correctOption = question.options.find((opt) => opt.key === question.correct_answer)
+
+  const selectedAnswerLabel = selectedOption
+    ? `${selectedOption.key}. ${selectedOption.text}`
+    : resolvedUserAnswer
+      ? resolvedUserAnswer
+      : 'Not answered'
+  const correctAnswerLabel = correctOption
+    ? `${correctOption.key}. ${correctOption.text}`
+    : question.correct_answer
+  const explanationText = question.explanation?.trim() || 'No explanation available.'
+
   return (
     <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-950/5 overflow-hidden">
       {/* Question header */}
@@ -35,7 +49,7 @@ export function QuestionCard({
       {/* Options */}
       <div className="px-6 py-4 space-y-2.5">
         {question.options.map((opt) => {
-          const isSelected = selectedAnswer === opt.key || userAnswer === opt.key
+          const isSelected = resolvedUserAnswer === opt.key
           const isCorrect = opt.key === question.correct_answer
           const isWrong = showResult && isSelected && !isCorrect
 
@@ -84,9 +98,17 @@ export function QuestionCard({
 
       {/* Explanation (after submit) */}
       {showResult && (
-        <div className="px-6 py-3 bg-blue-50 border-t border-blue-100">
+        <div className="px-6 py-3 bg-blue-50 border-t border-blue-100 space-y-1.5">
+          <p className="text-xs text-gray-700">
+            <span className="font-semibold">Your answer:</span> {selectedAnswerLabel}
+          </p>
+          <p className="text-xs text-emerald-800">
+            <span className="font-semibold">Correct answer:</span> {correctAnswerLabel}
+          </p>
           <p className="text-xs font-semibold text-blue-700 mb-0.5">Explanation</p>
-          <p className="text-xs text-blue-800 leading-relaxed">{question.explanation}</p>
+          <p className="text-xs text-blue-800 leading-relaxed overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]">
+            {explanationText}
+          </p>
         </div>
       )}
     </div>

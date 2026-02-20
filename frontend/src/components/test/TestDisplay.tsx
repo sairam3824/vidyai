@@ -17,6 +17,7 @@ interface TestDisplayProps {
 export function TestDisplay({ test, onReset }: TestDisplayProps) {
   const router = useRouter()
   const questions = test.questions_json.questions ?? []
+  const isCompleted = test.score !== null
 
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [result, setResult] = useState<SubmitTestResponse | null>(null)
@@ -44,10 +45,22 @@ export function TestDisplay({ test, onReset }: TestDisplayProps) {
     }
   }
 
+  const reviewScore = result?.score ?? (isCompleted ? (test.score ?? 0) : null)
+  const hasPersistedAnswers = questions.some((q) => q.user_answer !== null && q.user_answer !== undefined)
+  const persistedCorrectAnswers = questions.filter((q) => q.user_answer === q.correct_answer).length
+  const estimatedCorrectAnswers = Math.round(((test.score ?? 0) * questions.length) / 100)
+  const reviewCorrectAnswers = result
+    ? result.correct_answers
+    : hasPersistedAnswers
+      ? persistedCorrectAnswers
+      : estimatedCorrectAnswers
+  const reviewTotalQuestions = result?.total_questions ?? questions.length
+
   // ── Results screen ────────────────────────────────────────────────────────
-  if (result) {
-    const pct = result.score
+  if (reviewScore !== null) {
+    const pct = reviewScore
     const badgeClass = scoreBg(pct)
+    const title = result ? 'Test Complete!' : 'Test Review'
 
     return (
       <div className="space-y-8">
@@ -58,7 +71,7 @@ export function TestDisplay({ test, onReset }: TestDisplayProps) {
               <Trophy className="h-8 w-8 text-indigo-600" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Test Complete!</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
           <p className="text-gray-500 mt-1">
             {test.chapter_name} · {test.subject_name}
           </p>
@@ -66,7 +79,7 @@ export function TestDisplay({ test, onReset }: TestDisplayProps) {
             {pct.toFixed(0)}%
           </div>
           <p className="mt-3 text-sm text-gray-600">
-            {result.correct_answers} / {result.total_questions} correct
+            {reviewCorrectAnswers} / {reviewTotalQuestions} correct
           </p>
 
           <div className="flex justify-center gap-3 mt-6">
@@ -93,7 +106,7 @@ export function TestDisplay({ test, onReset }: TestDisplayProps) {
                 question={q}
                 index={i}
                 showResult
-                userAnswer={answers[String(q.id)]}
+                userAnswer={result ? answers[String(q.id)] : q.user_answer}
                 onAnswer={() => {}}
               />
             ))}
