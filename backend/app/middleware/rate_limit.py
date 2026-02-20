@@ -28,8 +28,34 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.window = window_seconds
         self._log: DefaultDict[str, List[float]] = defaultdict(list)
 
+    def _get_client_ip(self, request: Request) -> str:
+        # Use proxy headers when present so each real user gets an independent bucket.
+        forwarded_for = request.headers.get("x-forwarded-for")
+        if forwarded_for:
+            ip = forwarded_for.split(",")[0].strip()
+            if ip:
+                return ip
+
+        real_ip = request.headers.get("x-real-ip")
+        if real_ip:
+            ip = real_ip.strip()
+            if ip:
+                return ip
+
+        cf_ip = request.headers.get("cf-connecting-ip")
+        if cf_ip:
+            ip = cf_ip.strip()
+            if ip:
+                return ip
+
+        return (request.client.host if request.client else None) or "unknown"
+
     async def dispatch(self, request: Request, call_next) -> Response:
-        ip = (request.client.host if request.client else None) or "unknown"
+        # CORS preflight should never be throttled.
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
+        ip = self._get_client_ip(request)
         now = time.monotonic()
         cutoff = now - self.window
 
