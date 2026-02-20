@@ -27,11 +27,11 @@ services:
       # AWS_ACCESS_KEY_ID: ...
       # AWS_SECRET_ACCESS_KEY: ...
       # S3_BUCKET_NAME: edusaas-textbooks
-      ALLOWED_ORIGINS: '["https://yourdomain.com"]'
+      # ALLOWED_ORIGINS is read from backend/.env — set it there
     volumes: []  # no bind mounts in production
 
   frontend:
     restart: always
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: https://api.yourdomain.com/api/v1
+      NEXT_PUBLIC_API_URL: https://vidyai.saiii.in/api/v1
