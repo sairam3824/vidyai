@@ -7,6 +7,7 @@ export interface User {
   subscription_tier: 'free' | 'basic' | 'premium' | 'enterprise'
   is_admin: boolean
   is_active: boolean
+  is_verified: boolean
 }
 
 // ─── Curriculum ───────────────────────────────────────────────────────────────
