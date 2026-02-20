@@ -47,26 +47,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Guard /admin routes — only allow users with is_admin = true
+  // Guard /admin routes — query Supabase profiles table directly
+  // (avoids relying on the backend API which is unreachable from Vercel edge middleware)
   if (isAdminRoute && user) {
-    try {
-      const session = await supabase.auth.getSession()
-      const token = session.data.session?.access_token
-      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1'
-      const res = await fetch(`${apiBase}/auth/me`, {
-        cache: 'no-store',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (res.ok) {
-        const profile = await res.json()
-        if (!profile.is_admin) {
-          return NextResponse.redirect(new URL('/dashboard', request.url))
-        }
-      } else {
-        // If profile fetch fails, deny access to be safe
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-      }
-    } catch {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile?.is_admin) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
