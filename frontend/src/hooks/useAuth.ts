@@ -48,11 +48,14 @@ export function useAuth() {
   const login = useCallback(
     async (email: string, password: string): Promise<void> => {
       const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { error, data: { user } } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw new Error(error.message)
-      const profile = await authApi.me()
+      const [profile, { data: profileData }] = await Promise.all([
+        authApi.me(),
+        supabase.from('profiles').select('is_admin').eq('id', user!.id).single(),
+      ])
       setUser(profile)
-      router.push(profile.is_admin ? '/admin' : '/dashboard')
+      router.push(profileData?.is_admin ? '/admin' : '/dashboard')
     },
     [setUser, router],
   )

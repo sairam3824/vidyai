@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { adminApi, ApiError } from '@/lib/api'
+import { createClient } from '@/lib/supabase'
 import { PageLoader } from '@/components/ui/LoadingSpinner'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -13,20 +13,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     let cancelled = false
 
     const guardAdminRoute = async () => {
-      try {
-        // Let backend admin authorization decide access (source of truth).
-        await adminApi.listUsers(0, 1)
-        if (!cancelled) {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        if (!cancelled) router.replace('/login')
+        return
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single()
+
+      if (!cancelled) {
+        if (!profile?.is_admin) {
+          router.replace('/dashboard')
+        } else {
           setLoading(false)
         }
-      } catch (error) {
-        if (cancelled) return
-
-        if (error instanceof ApiError && error.status === 403) {
-          router.replace('/dashboard')
-          return
-        }
-        router.replace('/login')
       }
     }
 
