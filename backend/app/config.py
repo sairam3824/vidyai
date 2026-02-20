@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
 from functools import lru_cache
-from typing import List, Optional
+from typing import Any, List, Optional
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -56,6 +58,34 @@ class Settings(BaseSettings):
 
     # ── CORS ─────────────────────────────────────────────────────────────────
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000"]
+    ALLOWED_ORIGIN_REGEX: Optional[str] = None
+
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def parse_allowed_origins(cls, value: Any) -> List[str]:
+        """Support both JSON array and comma-separated origin lists."""
+        if value is None:
+            return []
+
+        if isinstance(value, list):
+            return [str(origin).strip() for origin in value if str(origin).strip()]
+
+        if isinstance(value, str):
+            text = value.strip()
+            if not text:
+                return []
+
+            if text.startswith("["):
+                try:
+                    parsed = json.loads(text)
+                except json.JSONDecodeError:
+                    parsed = None
+                if isinstance(parsed, list):
+                    return [str(origin).strip() for origin in parsed if str(origin).strip()]
+
+            return [origin.strip() for origin in text.split(",") if origin.strip()]
+
+        raise ValueError("ALLOWED_ORIGINS must be a list or comma-separated string")
 
     class Config:
         env_file = ".env"

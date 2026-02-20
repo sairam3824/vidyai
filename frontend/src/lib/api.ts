@@ -9,7 +9,8 @@ import type {
 } from '@/types'
 import { createClient } from '@/lib/supabase'
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1'
+const LOCAL_FALLBACK_API_URL = 'http://localhost:8000/api/v1'
+const CONFIGURED_API_URL = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/+$/, '')
 
 export class ApiError extends Error {
   constructor(
@@ -19,6 +20,32 @@ export class ApiError extends Error {
     super(message)
     this.name = 'ApiError'
   }
+}
+
+function resolveBaseUrl(): string {
+  if (CONFIGURED_API_URL) {
+    return CONFIGURED_API_URL
+  }
+
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return LOCAL_FALLBACK_API_URL
+    }
+  }
+
+  throw new ApiError(
+    0,
+    'NEXT_PUBLIC_API_URL is not configured. Set it to your backend API URL (for example: https://api.yourdomain.com/api/v1).',
+  )
+}
+
+function toNetworkApiError(baseUrl: string, error: unknown): ApiError {
+  const reason = error instanceof Error ? error.message : 'Network request failed'
+  return new ApiError(
+    0,
+    `Could not reach backend API at ${baseUrl}. Check NEXT_PUBLIC_API_URL, HTTPS, and backend CORS origin settings. (${reason})`,
+  )
 }
 
 async function getToken(): Promise<string | null> {
@@ -32,6 +59,7 @@ async function request<T>(
   path: string,
   options: { body?: unknown } = {},
 ): Promise<T> {
+  const baseUrl = resolveBaseUrl()
   const token = await getToken()
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -40,12 +68,17 @@ async function request<T>(
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method,
-    cache: 'no-store',
-    headers,
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-  })
+  let res: Response
+  try {
+    res = await fetch(`${baseUrl}${path}`, {
+      method,
+      cache: 'no-store',
+      headers,
+      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    })
+  } catch (error) {
+    throw toNetworkApiError(baseUrl, error)
+  }
 
   if (!res.ok) {
     const payload = await res.json().catch(() => ({ detail: 'Request failed' }))
@@ -56,18 +89,24 @@ async function request<T>(
 }
 
 async function requestFormData<T>(path: string, formData: FormData): Promise<T> {
+  const baseUrl = resolveBaseUrl()
   const token = await getToken()
   const headers: Record<string, string> = {}
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: 'POST',
-    cache: 'no-store',
-    headers,
-    body: formData,
-  })
+  let res: Response
+  try {
+    res = await fetch(`${baseUrl}${path}`, {
+      method: 'POST',
+      cache: 'no-store',
+      headers,
+      body: formData,
+    })
+  } catch (error) {
+    throw toNetworkApiError(baseUrl, error)
+  }
 
   if (!res.ok) {
     const payload = await res.json().catch(() => ({ detail: 'Request failed' }))

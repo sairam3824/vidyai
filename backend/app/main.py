@@ -23,6 +23,11 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION} [{settings.ENVIRONMENT}]")
+    logger.info(
+        "CORS configured with origins=%s regex=%s",
+        settings.ALLOWED_ORIGINS,
+        settings.ALLOWED_ORIGIN_REGEX,
+    )
     yield
     logger.info("Shutting down cleanly.")
 
@@ -42,6 +47,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origin_regex=settings.ALLOWED_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

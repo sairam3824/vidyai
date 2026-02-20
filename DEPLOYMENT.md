@@ -149,6 +149,10 @@ cd vidyai
 cp backend/.env.example backend/.env
 nano backend/.env
 # Fill in all values (Supabase, OpenAI, AWS, Redis)
+# Critical for frontend API access:
+# ALLOWED_ORIGINS=["https://your-app.vercel.app","https://your-custom-domain.com","http://localhost:3000"]
+# Optional for Vercel preview URLs:
+# ALLOWED_ORIGIN_REGEX=https://.*\\.vercel\\.app
 ```
 
 ### 3.5 Start services
@@ -227,6 +231,8 @@ In Vercel Dashboard → Project → **Settings → Environment Variables**:
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://[ref].supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJ...` |
 | `NEXT_PUBLIC_API_URL` | `https://api.yourdomain.com/api/v1` |
+
+`NEXT_PUBLIC_API_URL` must be HTTPS in production and include the `/api/v1` suffix.
 
 ### 4.3 Update Supabase redirect URL
 Supabase Dashboard → **Authentication → URL Configuration**:
