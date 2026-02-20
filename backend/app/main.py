@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.core.exceptions import AppException
 from app.middleware.rate_limit import RateLimitMiddleware
-from app.routers import auth, boards, tests, usage
+from app.routers import admin, auth, boards, tests, usage
 
 logging.basicConfig(
     level=logging.DEBUG if settings.DEBUG else logging.INFO,
@@ -30,13 +30,14 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="AI-powered Education SaaS API — CBSE Class 10",
+    description="AI-powered Education SaaS API — CBSE & more",
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
     lifespan=lifespan,
 )
 
-# ── Middleware (order matters: outermost applied last) ──────────────────────
+
+# ── Middleware ──────────────────────────────────────────────────────────────
 
 app.add_middleware(
     CORSMiddleware,
@@ -79,6 +80,7 @@ app.include_router(auth.router, prefix=PREFIX)
 app.include_router(boards.router, prefix=PREFIX)
 app.include_router(tests.router, prefix=PREFIX)
 app.include_router(usage.router, prefix=PREFIX)
+app.include_router(admin.router, prefix=PREFIX)
 
 
 # ── Health check ─────────────────────────────────────────────────────────────

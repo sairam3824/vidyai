@@ -1,39 +1,72 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+import logging
 
-from jose import JWTError, jwt
-from passlib.context import CryptContext
+import httpx
+from jose import JWTError, jwk, jwt
 
 from app.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+logger = logging.getLogger(__name__)
+
+# In-process JWKS cache — refreshed on startup or on key-not-found
+_jwks_cache: dict | None = None
 
 
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+def _fetch_jwks() -> dict:
+    """Fetch public signing keys from Supabase JWKS endpoint."""
+    url = f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+    response = httpx.get(url, timeout=10)
+    response.raise_for_status()
+    return response.json()
 
 
-def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+def _get_jwks(refresh: bool = False) -> dict:
+    global _jwks_cache
+    if _jwks_cache is None or refresh:
+        _jwks_cache = _fetch_jwks()
+        logger.info("JWKS refreshed (%d keys)", len(_jwks_cache.get("keys", [])))
+    return _jwks_cache
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    payload = data.copy()
-    expire = datetime.now(timezone.utc) + (
-        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
-    payload.update({"exp": expire, "type": "access"})
-    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+def verify_supabase_token(token: str) -> dict:
+    """Verify a Supabase-issued JWT using the JWKS endpoint.
 
+    Supports both ES256 (ECC P-256, current) and HS256 (legacy shared secret).
+    Automatically selects the correct public key via the token's `kid` header.
+    """
+    try:
+        header = jwt.get_unverified_header(token)
+        kid = header.get("kid")
+        alg = header.get("alg", "ES256")
 
-def create_refresh_token(data: dict) -> str:
-    payload = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    payload.update({"exp": expire, "type": "refresh"})
-    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+        jwks = _get_jwks()
+        key_data = next(
+            (k for k in jwks.get("keys", []) if k.get("kid") == kid),
+            None,
+        )
 
+        if key_data is None:
+            # Key not in cache — might be a newly rotated key, refresh once
+            logger.warning("kid=%s not in JWKS cache, refreshing…", kid)
+            jwks = _get_jwks(refresh=True)
+            key_data = next(
+                (k for k in jwks.get("keys", []) if k.get("kid") == kid),
+                None,
+            )
 
-def decode_token(token: str) -> dict:
-    return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if key_data is None:
+            raise JWTError(f"Signing key not found for kid={kid}")
+
+        public_key = jwk.construct(key_data)
+        return jwt.decode(
+            token,
+            public_key,
+            algorithms=[alg],
+            audience="authenticated",
+        )
+
+    except JWTError:
+        raise
+    except Exception as exc:
+        raise JWTError(str(exc)) from exc

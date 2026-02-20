@@ -14,14 +14,15 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     ENVIRONMENT: str = "development"  # development | staging | production
 
-    # ── Database ─────────────────────────────────────────────────────────────
-    DATABASE_URL: str
+    # ── Database (Supabase PostgreSQL) ────────────────────────────────────────
+    DATABASE_URL: str  # postgresql://postgres.[ref]:[password]@[host]:5432/postgres
 
-    # ── JWT ──────────────────────────────────────────────────────────────────
-    SECRET_KEY: str
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    # ── Supabase ─────────────────────────────────────────────────────────────
+    SUPABASE_URL: str
+    SUPABASE_ANON_KEY: str
+    SUPABASE_SERVICE_ROLE_KEY: str
+    # JWT secret only needed if using legacy HS256 signing — not required for ECC (P-256)
+    SUPABASE_JWT_SECRET: Optional[str] = None
 
     # ── OpenAI ───────────────────────────────────────────────────────────────
     OPENAI_API_KEY: str
@@ -34,14 +35,14 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     CACHE_TTL_SECONDS: int = 604800       # 7 days
 
-    # ── Storage ──────────────────────────────────────────────────────────────
-    STORAGE_MODE: str = "local"           # "local" | "s3"
+    # ── Storage (AWS S3 for PDFs) ─────────────────────────────────────────────
+    STORAGE_MODE: str = "s3"             # "local" | "s3"
     LOCAL_STORAGE_PATH: str = "./storage"
 
     # ── AWS ──────────────────────────────────────────────────────────────────
     AWS_ACCESS_KEY_ID: Optional[str] = None
     AWS_SECRET_ACCESS_KEY: Optional[str] = None
-    AWS_REGION: str = "us-east-1"
+    AWS_REGION: str = "ap-south-1"
     S3_BUCKET_NAME: Optional[str] = None
 
     # ── Usage / Limits ───────────────────────────────────────────────────────

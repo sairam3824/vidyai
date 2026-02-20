@@ -1,14 +1,17 @@
 version: "3.9"
 
-# ── Local development stack ────────────────────────────────────────────────────
-# Starts: PostgreSQL + pgvector, FastAPI backend, Next.js frontend
+# ── Production-equivalent local development stack ──────────────────────────────
+# DB + Auth: Supabase (cloud) — no local PostgreSQL
+# Backend:   FastAPI (port 8000)
+# Worker:    Celery (PDF ingestion)
+# Cache/Queue: Redis (port 6379)
 #
 # Usage:
+#   cp backend/.env.example backend/.env   # fill in Supabase + AWS + OpenAI keys
 #   docker compose up --build
-#   docker compose down -v   (destroys volumes)
 
 services:
-  # ── Redis (cache) ──────────────────────────────────────────────────────────
+  # ── Redis (cache + Celery broker) ──────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: vidyai-redis
@@ -23,25 +26,6 @@ services:
       timeout: 3s
       retries: 5
 
-  # ── PostgreSQL + pgvector ──────────────────────────────────────────────────
-  db:
-    image: pgvector/pgvector:pg16
-    container_name: vidyai-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: edusaas
-      POSTGRES_PASSWORD: edusaas
-      POSTGRES_DB: edusaas
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U edusaas"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   # ── FastAPI backend ────────────────────────────────────────────────────────
   backend:
     build:
@@ -50,42 +34,40 @@ services:
     container_name: vidyai-backend
     restart: unless-stopped
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
     env_file:
       - ./backend/.env
     environment:
-      DATABASE_URL: postgresql://edusaas:edusaas@db:5432/edusaas
       REDIS_URL: redis://redis:6379/0
-      STORAGE_MODE: local
-      LOCAL_STORAGE_PATH: /app/storage
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app          # hot-reload in dev
-      - storage_data:/app/storage
     command: >
-      sh -c "alembic upgrade head &&
-             python scripts/seed_data.py &&
-             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-  # ── Next.js frontend ──────────────────────────────────────────────────────
-  frontend:
+  # ── Celery worker (PDF ingestion) ──────────────────────────────────────────
+  worker:
     build:
-      context: ./frontend
+      context: ./backend
       dockerfile: Dockerfile
-    container_name: vidyai-frontend
+    container_name: vidyai-worker
     restart: unless-stopped
     depends_on:
-      - backend
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./backend/.env
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
-    ports:
-      - "3000:3000"
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+    command: >
+      celery -A app.worker.celery_app worker
+             --loglevel=info
+             --concurrency=2
+             -Q celery
 
 volumes:
-  pgdata:
-  storage_data:
   redisdata:
