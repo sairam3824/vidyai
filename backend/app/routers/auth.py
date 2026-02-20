@@ -1,30 +1,36 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.user import User
+from app.models.user import Profile
 from app.routers.deps import get_current_user
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse
-from app.services.auth_service import AuthService
+from app.schemas.auth import ProfileResponse, ProfileUpdateRequest
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-@router.post("/register", response_model=TokenResponse, status_code=201)
-def register(data: RegisterRequest, db: Session = Depends(get_db)) -> TokenResponse:
-    """Create a new account and return an access token."""
-    return AuthService(db).register(data)
+@router.get("/me", response_model=ProfileResponse)
+def me(
+    response: Response,
+    current_user: Profile = Depends(get_current_user),
+) -> Profile:
+    """Return the currently authenticated user's profile."""
+    response.headers["Cache-Control"] = "no-store, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    return current_user
 
 
-@router.post("/login", response_model=TokenResponse)
-def login(data: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
-    """Authenticate and return an access token."""
-    return AuthService(db).login(data)
-
-
-@router.get("/me", response_model=UserResponse)
-def me(current_user: User = Depends(get_current_user)) -> User:
-    """Return the currently authenticated user."""
+@router.patch("/me", response_model=ProfileResponse)
+def update_me(
+    data: ProfileUpdateRequest,
+    current_user: Profile = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Profile:
+    """Update the current user's profile."""
+    if data.full_name is not None:
+        current_user.full_name = data.full_name
+    db.commit()
+    db.refresh(current_user)
     return current_user
