@@ -1,16 +1,24 @@
 from __future__ import annotations
 
+import io
 import logging
-from typing import List
+from typing import Any, List
 
 from openai import OpenAI
+from pypdf import PdfReader
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.models.text_chunk import TextChunk
 from app.services.cache_service import cache
+from app.services.storage_service import storage_service
 
 logger = logging.getLogger(__name__)
+
+CHUNK_SIZE = 900
+CHUNK_OVERLAP = 100
+EMBED_BATCH_SIZE = 20
 
 
 class RAGService:
@@ -46,6 +54,148 @@ class RAGService:
             model=settings.OPENAI_EMBEDDING_MODEL,
         )
         return [item.embedding for item in response.data]
+
+    # ── Embedding readiness ───────────────────────────────────────────────
+
+    def ensure_chapter_embeddings(
+        self,
+        chapter_id: int,
+        pdf_s3_key: str | None,
+    ) -> int:
+        """Ensure chapter embeddings exist before retrieval.
+
+        Strategy:
+        1) If chunks exist but some/all embeddings are missing, backfill those rows.
+        2) If no chunks exist, download chapter PDF, chunk it, embed it, and store.
+        """
+        total_chunks = self._count_chunks(chapter_id)
+        embedded_chunks = self._count_chunks(chapter_id, embedded_only=True)
+
+        if total_chunks > 0 and embedded_chunks == total_chunks:
+            return embedded_chunks
+
+        if total_chunks > 0 and embedded_chunks < total_chunks:
+            missing_chunks = (
+                self.db.query(TextChunk)
+                .filter(TextChunk.chapter_id == chapter_id, TextChunk.embedding.is_(None))
+                .order_by(TextChunk.chunk_index.asc())
+                .all()
+            )
+            if missing_chunks:
+                logger.info(
+                    "RAG: chapter %d has %d/%d embeddings; backfilling %d missing rows",
+                    chapter_id,
+                    embedded_chunks,
+                    total_chunks,
+                    len(missing_chunks),
+                )
+                self._embed_existing_chunks(chapter_id, missing_chunks)
+            return self._count_chunks(chapter_id, embedded_only=True)
+
+        if not pdf_s3_key:
+            logger.warning(
+                "RAG: chapter %d has no chunks and no source PDF key; cannot auto-generate embeddings",
+                chapter_id,
+            )
+            return 0
+
+        logger.info(
+            "RAG: chapter %d has no chunks; generating embeddings from source PDF %s",
+            chapter_id,
+            pdf_s3_key,
+        )
+        return self._ingest_chunks_from_pdf(chapter_id, pdf_s3_key)
+
+    def _count_chunks(self, chapter_id: int, embedded_only: bool = False) -> int:
+        query = self.db.query(func.count(TextChunk.id)).filter(
+            TextChunk.chapter_id == chapter_id
+        )
+        if embedded_only:
+            query = query.filter(TextChunk.embedding.isnot(None))
+        return int(query.scalar() or 0)
+
+    def _embed_existing_chunks(self, chapter_id: int, chunks: List[TextChunk]) -> None:
+        for i in range(0, len(chunks), EMBED_BATCH_SIZE):
+            batch = chunks[i : i + EMBED_BATCH_SIZE]
+            texts = [chunk.content for chunk in batch]
+            embeddings = self.embed_batch(texts)
+            for chunk, embedding in zip(batch, embeddings):
+                chunk.embedding = embedding
+            self.db.commit()
+
+        logger.info(
+            "RAG: chapter %d backfilled embeddings for %d chunks",
+            chapter_id,
+            len(chunks),
+        )
+
+    def _ingest_chunks_from_pdf(self, chapter_id: int, pdf_s3_key: str) -> int:
+        try:
+            pdf_bytes = storage_service.download(pdf_s3_key)
+            all_chunks = self._extract_pdf_chunks(pdf_bytes)
+            if not all_chunks:
+                logger.warning(
+                    "RAG: chapter %d PDF produced no text chunks during on-demand ingestion",
+                    chapter_id,
+                )
+                return 0
+
+            self.db.query(TextChunk).filter(TextChunk.chapter_id == chapter_id).delete()
+            self.db.commit()
+
+            for i in range(0, len(all_chunks), EMBED_BATCH_SIZE):
+                batch = all_chunks[i : i + EMBED_BATCH_SIZE]
+                texts = [chunk["content"] for chunk in batch]
+                embeddings = self.embed_batch(texts)
+                for chunk, embedding in zip(batch, embeddings):
+                    self.db.add(
+                        TextChunk(
+                            chapter_id=chapter_id,
+                            content=chunk["content"],
+                            chunk_index=chunk["chunk_index"],
+                            page_number=chunk["page_number"],
+                            embedding=embedding,
+                        )
+                    )
+                self.db.commit()
+
+            logger.info(
+                "RAG: chapter %d on-demand ingestion stored %d embedded chunks",
+                chapter_id,
+                len(all_chunks),
+            )
+            return len(all_chunks)
+        except Exception:
+            self.db.rollback()
+            logger.exception(
+                "RAG: chapter %d failed on-demand embedding ingestion", chapter_id
+            )
+            raise
+
+    @staticmethod
+    def _extract_pdf_chunks(pdf_bytes: bytes) -> List[dict[str, Any]]:
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+        all_chunks: List[dict[str, Any]] = []
+
+        for page_num, page in enumerate(reader.pages):
+            text = (page.extract_text() or "").strip()
+            if not text:
+                continue
+
+            start = 0
+            while start < len(text):
+                chunk_text = text[start : start + CHUNK_SIZE].strip()
+                if chunk_text:
+                    all_chunks.append(
+                        {
+                            "content": chunk_text,
+                            "page_number": page_num + 1,
+                            "chunk_index": len(all_chunks),
+                        }
+                    )
+                start += CHUNK_SIZE - CHUNK_OVERLAP
+
+        return all_chunks
 
     # ── Retrieval ─────────────────────────────────────────────────────────
 

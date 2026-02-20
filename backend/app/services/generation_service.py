@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 _MCQ_SYSTEM_PROMPT = """\
 You are an expert CBSE curriculum question setter.
-Generate exactly {num_questions} multiple-choice questions (MCQs) based strictly on the provided chapter content.
+Generate exactly <<NUM_QUESTIONS>> multiple-choice questions (MCQs) based strictly on the provided chapter content.
 
 Rules:
 - Each question must have exactly 4 options labelled A, B, C, D.
@@ -102,6 +102,30 @@ class GenerationService:
                 request.num_questions,
             )
 
+            try:
+                embedded_chunks = self.rag.ensure_chapter_embeddings(
+                    chapter_id=chapter.id,
+                    pdf_s3_key=chapter.pdf_s3_key,
+                )
+            except Exception as exc:
+                logger.error(
+                    "Failed to auto-generate embeddings for chapter %d: %s",
+                    chapter.id,
+                    exc,
+                    exc_info=True,
+                )
+                raise GenerationError(
+                    "Failed to prepare chapter embeddings. Please retry."
+                )
+
+            if embedded_chunks == 0:
+                raise GenerationError(
+                    "No embeddings found for this chapter. Please upload/reprocess the chapter PDF first."
+                )
+            if chapter.status != "ready" or chapter.error_message:
+                chapter.status = "ready"
+                chapter.error_message = None
+
             # ── Strategy 2: Redis RAG context cache ───────────────────────
             # retrieve_context() caches the embedding + vector search result
             # in Redis, skipping the OpenAI embed call on subsequent requests.
@@ -111,7 +135,9 @@ class GenerationService:
             )
             context = self.rag.retrieve_context(chapter.id, rag_query)
             if not context:
-                context = f"Chapter: {chapter.chapter_name}"
+                raise GenerationError(
+                    "Failed to retrieve chapter context from embeddings. Please retry."
+                )
 
             questions_json = self._call_openai(
                 context=context,
@@ -266,7 +292,8 @@ class GenerationService:
         chapter_name: str,
         num_questions: int,
     ) -> Dict[str, Any]:
-        system_msg = _MCQ_SYSTEM_PROMPT.format(num_questions=num_questions)
+        # Avoid str.format here because prompt contains literal JSON braces.
+        system_msg = _MCQ_SYSTEM_PROMPT.replace("<<NUM_QUESTIONS>>", str(num_questions))
         user_msg = (
             f"Chapter: {chapter_name}\n\n"
             f"Content:\n{context}\n\n"
