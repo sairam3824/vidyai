@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel
 
 
 class ProfileResponse(BaseModel):
-    id: str
+    id: UUID
     email: Optional[str]
     full_name: Optional[str]
     subscription_tier: str
