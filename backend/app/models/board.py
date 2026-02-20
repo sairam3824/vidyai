@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -74,6 +74,10 @@ class Chapter(Base):
     chapter_name = Column(String(255), nullable=False)
     description = Column(String(1000), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
+    # Ingestion status: pending | processing | ready | failed
+    status = Column(String(20), default="ready", nullable=False)
+    pdf_s3_key = Column(Text, nullable=True)   # S3 key of the source PDF
+    error_message = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     subject = relationship("Subject", back_populates="chapters")
@@ -81,6 +85,7 @@ class Chapter(Base):
         "TextChunk", back_populates="chapter", cascade="all, delete-orphan"
     )
     generated_tests = relationship("GeneratedTest", back_populates="chapter")
+    ingestion_jobs = relationship("IngestionJob", back_populates="chapter", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Chapter {self.chapter_number}: {self.chapter_name}>"

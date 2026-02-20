@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -14,8 +15,8 @@ class UsageTracking(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(
-        Integer,
-        ForeignKey("users.id", ondelete="CASCADE"),
+        UUID(as_uuid=True),
+        ForeignKey("profiles.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -28,7 +29,7 @@ class UsageTracking(Base):
         UniqueConstraint("user_id", "week_start", name="uq_user_week"),
     )
 
-    user = relationship("User", back_populates="usage_tracking")
+    user = relationship("Profile", back_populates="usage_tracking")
 
     def __repr__(self) -> str:
         return f"<UsageTracking user={self.user_id} week={self.week_start} count={self.tests_generated}>"

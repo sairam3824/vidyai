@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -14,8 +15,8 @@ class GeneratedTest(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(
-        Integer,
-        ForeignKey("users.id", ondelete="CASCADE"),
+        UUID(as_uuid=True),
+        ForeignKey("profiles.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -30,7 +31,7 @@ class GeneratedTest(Base):
     completed_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    user = relationship("User", back_populates="generated_tests")
+    user = relationship("Profile", back_populates="generated_tests")
     chapter = relationship("Chapter", back_populates="generated_tests")
 
     def __repr__(self) -> str:
