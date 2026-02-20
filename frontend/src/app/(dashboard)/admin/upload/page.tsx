@@ -8,18 +8,44 @@ import type { IngestionJob } from '@/types'
 type Step = 'form' | 'uploading' | 'processing' | 'done' | 'error'
 
 const BOARDS = ['CBSE', 'ICSE', 'Maharashtra State Board']
-const CLASSES = Array.from({ length: 8 }, (_, i) => i + 5) // 5–12
+const CLASSES = Array.from({ length: 12 }, (_, i) => i + 1) // 1–12
+
+const SUBJECTS_BY_CLASS: Record<string, string[]> = {
+  '1-5': ['Mathematics', 'English', 'Hindi', 'Environmental Studies'],
+  '6-8': [
+    'Mathematics', 'Science', 'Social Science',
+    'English', 'Hindi', 'Sanskrit', 'Urdu',
+  ],
+  '9-10': [
+    'Mathematics', 'Science', 'Social Science',
+    'English', 'Hindi', 'Sanskrit', 'Urdu',
+    'Information Technology', 'Health and Physical Education',
+  ],
+  '11-12': [
+    'Physics', 'Chemistry', 'Biology', 'Mathematics',
+    'Accountancy', 'Business Studies', 'Economics',
+    'History', 'Political Science', 'Geography',
+    'Sociology', 'Psychology', 'Computer Science',
+    'English', 'Hindi', 'Physical Education',
+  ],
+}
+
+function getSubjects(classNum: number): string[] {
+  if (classNum <= 5) return SUBJECTS_BY_CLASS['1-5']
+  if (classNum <= 8) return SUBJECTS_BY_CLASS['6-8']
+  if (classNum <= 10) return SUBJECTS_BY_CLASS['9-10']
+  return SUBJECTS_BY_CLASS['11-12']
+}
 
 export default function AdminUploadPage() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
   const [boardName, setBoardName] = useState('CBSE')
   const [classNumber, setClassNumber] = useState(10)
-  const [subjectName, setSubjectName] = useState('')
+  const [subjectName, setSubjectName] = useState(getSubjects(10)[0])
   const [chapterName, setChapterName] = useState('')
   const [chapterNumber, setChapterNumber] = useState(1)
   const [step, setStep] = useState<Step>('form')
-  const [jobId, setJobId] = useState<string | null>(null)
   const [job, setJob] = useState<IngestionJob | null>(null)
   const [error, setError] = useState('')
 
@@ -39,7 +65,6 @@ export default function AdminUploadPage() {
       formData.append('file', file)
 
       const result = await adminApi.uploadPdf(formData)
-      setJobId(result.job_id)
       setStep('processing')
       pollStatus(result.job_id)
     } catch (err) {
@@ -71,11 +96,10 @@ export default function AdminUploadPage() {
     setFile(null)
     setBoardName('CBSE')
     setClassNumber(10)
-    setSubjectName('')
+    setSubjectName(getSubjects(10)[0])
     setChapterName('')
     setChapterNumber(1)
     setStep('form')
-    setJobId(null)
     setJob(null)
     setError('')
     if (fileRef.current) fileRef.current.value = ''
@@ -179,7 +203,11 @@ export default function AdminUploadPage() {
             <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Class</label>
             <select
               value={classNumber}
-              onChange={(e) => setClassNumber(Number(e.target.value))}
+              onChange={(e) => {
+                const c = Number(e.target.value)
+                setClassNumber(c)
+                setSubjectName(getSubjects(c)[0])
+              }}
               className="w-full rounded-xl bg-white/[0.05] border border-white/[0.08] text-white px-4 py-3 text-sm focus:outline-none focus:border-blue-500/60 transition-all"
             >
               {CLASSES.map((c) => <option key={c} value={c}>Class {c}</option>)}
@@ -187,14 +215,13 @@ export default function AdminUploadPage() {
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Subject</label>
-            <input
-              type="text"
-              required
+            <select
               value={subjectName}
               onChange={(e) => setSubjectName(e.target.value)}
-              placeholder="e.g. Mathematics"
-              className="w-full rounded-xl bg-white/[0.05] border border-white/[0.08] text-white placeholder-gray-600 px-4 py-3 text-sm focus:outline-none focus:border-blue-500/60 transition-all"
-            />
+              className="w-full rounded-xl bg-white/[0.05] border border-white/[0.08] text-white px-4 py-3 text-sm focus:outline-none focus:border-blue-500/60 transition-all"
+            >
+              {getSubjects(classNumber).map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
           </div>
         </div>
 
@@ -255,7 +282,7 @@ export default function AdminUploadPage() {
 
         <button
           type="submit"
-          disabled={!file || !subjectName || !chapterName}
+          disabled={!file || !chapterName}
           className="w-full rounded-xl bg-blue-500 hover:bg-blue-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 text-sm transition-colors shadow-lg shadow-blue-500/20"
         >
           Upload & Generate Embeddings
