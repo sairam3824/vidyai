@@ -13,7 +13,7 @@ from app.core.exceptions import GenerationError, NotFoundError
 from app.models.board import Chapter
 from app.models.generated_test import GeneratedTest
 from app.models.question_cache import QuestionCache
-from app.models.user import User
+from app.models.user import Profile
 from app.schemas.test import (
     AnswerDetail,
     GenerateTestRequest,
@@ -73,7 +73,7 @@ class GenerationService:
     # ── Generate ─────────────────────────────────────────────────────────
 
     def generate_test(
-        self, request: GenerateTestRequest, user: User
+        self, request: GenerateTestRequest, user: Profile
     ) -> GeneratedTestResponse:
         chapter = self.db.query(Chapter).filter(Chapter.id == request.chapter_id).first()
         if not chapter:
