@@ -40,7 +40,8 @@ services:
       - ./backend/.env
     environment:
       REDIS_URL: redis://redis:6379/0
-      ALLOWED_ORIGINS: '["https://vidyaiedtech.saiii.in","https://vidyai-zeta.vercel.app","http://localhost:3000"]'
+      ALLOWED_ORIGINS: '["https://vidyaiedtech.saiii.in","https://vidyai.saiii.in","https://vidyai-zeta.vercel.app","http://localhost:3000"]'
+      ALLOWED_ORIGIN_REGEX: 'https://.*\\.vercel\\.app'
     ports:
       - "8000:8000"
     volumes:
