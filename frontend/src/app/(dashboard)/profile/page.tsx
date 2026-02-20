@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { useAuthStore } from '@/store/authStore'
 import { useAuth } from '@/hooks/useAuth'
 import { usageApi } from '@/lib/api'
 import type { UsageStatus } from '@/types'
@@ -12,14 +11,12 @@ import { LogOut, Crown, Calendar, Zap, Shield, CheckCircle, XCircle } from 'luci
 
 export default function ProfilePage() {
   const { user, logout } = useAuth()
-  const token = useAuthStore((s) => s.token)!
   const [usage, setUsage] = useState<UsageStatus | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!token) return
-    usageApi.get(token).then(setUsage).finally(() => setLoading(false))
-  }, [token])
+    usageApi.get().then(setUsage).catch(() => {}).finally(() => setLoading(false))
+  }, [])
 
   const initials = (user?.full_name ?? user?.email ?? 'U')[0].toUpperCase()
   const tier = user?.subscription_tier ?? 'free'

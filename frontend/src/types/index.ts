@@ -1,18 +1,12 @@
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export interface User {
-  id: number
-  email: string
+  id: string   // UUID from Supabase Auth
+  email: string | null
   full_name: string | null
   subscription_tier: 'free' | 'basic' | 'premium' | 'enterprise'
+  is_admin: boolean
   is_active: boolean
-  is_verified: boolean
-}
-
-export interface TokenResponse {
-  access_token: string
-  token_type: string
-  user: User
 }
 
 // ─── Curriculum ───────────────────────────────────────────────────────────────
@@ -23,12 +17,16 @@ export interface Chapter {
   chapter_name: string
   description: string | null
   is_active: boolean
+  status: 'pending' | 'processing' | 'ready' | 'failed'
+  /** Number of embedded text chunks ingested from the PDF. 0 = not ready yet. */
+  chunk_count: number
 }
 
 export interface Subject {
   id: number
   subject_name: string
   subject_code: string | null
+  is_active: boolean
   chapters: Chapter[]
 }
 
@@ -36,6 +34,7 @@ export interface Class {
   id: number
   class_number: number
   display_name: string
+  is_active: boolean
   subjects: Subject[]
 }
 
@@ -44,6 +43,7 @@ export interface Board {
   name: string
   code: string
   description: string | null
+  is_active: boolean
   classes: Class[]
 }
 
@@ -103,6 +103,30 @@ export interface UsageStatus {
   week_start: string
   can_generate: boolean
   subscription_tier: string
+}
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
+
+export interface AdminChapter {
+  id: number
+  chapter_number: number
+  chapter_name: string
+  status: 'pending' | 'processing' | 'ready' | 'failed'
+  chunk_count: number
+  subject: string | null
+  class_number: number | null
+  board: string | null
+  created_at: string
+}
+
+export interface IngestionJob {
+  id: string
+  chapter_id: number | null
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  error_message: string | null
+  started_at: string | null
+  completed_at: string | null
+  created_at: string
 }
 
 // ─── UI Utilities ─────────────────────────────────────────────────────────────

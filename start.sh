@@ -99,15 +99,36 @@ for i in {1..20}; do
 done
 success "PostgreSQL is ready (localhost:5432)"
 
+
+# ── Helper: Check and kill port ──────────────────────────────────────────────
+check_port() {
+  local port=$1
+  local name=$2
+  if lsof -i :$port -t >/dev/null 2>&1; then
+    warn "Port $port is in use. Killing existing $name process..."
+    lsof -i :$port -t | xargs kill -9 2>/dev/null
+    sleep 1
+    success "$name stopped on port $port"
+  fi
+}
+
 # ── 2. Start FastAPI backend ──────────────────────────────────────────────────
 log "Starting FastAPI backend..."
 
+# Ensure port 8000 is free
+check_port 8000 "Backend"
+
 cd "$ROOT_DIR/backend"
+
+# Initialize conda for shell interaction
+eval "$($CONDA_CMD shell.bash hook)"
+conda activate "$CONDA_ENV_NAME"
 
 # Write backend logs to file and tail them
 BACKEND_LOG="$ROOT_DIR/backend.log"
-"$CONDA_CMD" run -n "$CONDA_ENV_NAME" \
-  uvicorn app.main:app --reload --port 8000 --host 0.0.0.0 \
+# Run with python -m uvicorn to ensure unbuffered output if possible, though uvicorn handles it.
+# Using 'nohup' or just '&' with active env is safer than 'conda run'
+python -m uvicorn app.main:app --reload --port 8000 --host 0.0.0.0 \
   > "$BACKEND_LOG" 2>&1 &
 BACKEND_PID=$!
 
@@ -118,6 +139,7 @@ for i in {1..30}; do
     success "Backend is ready (http://localhost:8000)"
     break
   fi
+  # If process died, show logs and exit
   if ! kill -0 "$BACKEND_PID" 2>/dev/null; then
     echo ""
     error "Backend crashed on startup. Check logs: cat backend.log"
@@ -132,6 +154,9 @@ cd "$ROOT_DIR"
 
 # ── 3. Start Next.js frontend ─────────────────────────────────────────────────
 log "Starting Next.js frontend..."
+
+# Ensure port 3000 is free
+check_port 3000 "Frontend"
 
 cd "$ROOT_DIR/frontend"
 

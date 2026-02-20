@@ -5,21 +5,18 @@ import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { useAuthStore } from '@/store/authStore'
 import { testsApi } from '@/lib/api'
 import type { GeneratedTest } from '@/types'
 import { formatDateTime } from '@/lib/utils'
 import { FileText, ArrowRight, Zap, Clock, BookOpen, Target } from 'lucide-react'
 
 export default function TestsPage() {
-  const token = useAuthStore((s) => s.token)!
   const [tests, setTests] = useState<GeneratedTest[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!token) return
-    testsApi.list(token, 0, 50).then(setTests).finally(() => setLoading(false))
-  }, [token])
+    testsApi.list(0, 50).then(setTests).catch(() => {}).finally(() => setLoading(false))
+  }, [])
 
   const attempted = tests.filter(t => t.score !== null).length
   const avgScore = attempted > 0

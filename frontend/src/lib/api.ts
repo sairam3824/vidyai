@@ -1,14 +1,17 @@
 import type {
+  AdminChapter,
   Board,
   GeneratedTest,
+  IngestionJob,
   SubmitTestResponse,
-  TokenResponse,
   UsageStatus,
+  User,
 } from '@/types'
+import { createClient } from '@/lib/supabase'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1'
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(
     public readonly status: number,
     message: string,
@@ -18,22 +21,52 @@ class ApiError extends Error {
   }
 }
 
+async function getToken(): Promise<string | null> {
+  const supabase = createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  return session?.access_token ?? null
+}
+
 async function request<T>(
   method: string,
   path: string,
-  options: { body?: unknown; token?: string } = {},
+  options: { body?: unknown } = {},
 ): Promise<T> {
+  const token = await getToken()
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
-  if (options.token) {
-    headers['Authorization'] = `Bearer ${options.token}`
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
+    cache: 'no-store',
     headers,
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+  })
+
+  if (!res.ok) {
+    const payload = await res.json().catch(() => ({ detail: 'Request failed' }))
+    throw new ApiError(res.status, payload.detail ?? 'Request failed')
+  }
+
+  return res.json() as Promise<T>
+}
+
+async function requestFormData<T>(path: string, formData: FormData): Promise<T> {
+  const token = await getToken()
+  const headers: Record<string, string> = {}
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'POST',
+    cache: 'no-store',
+    headers,
+    body: formData,
   })
 
   if (!res.ok) {
@@ -47,39 +80,35 @@ async function request<T>(
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 export const authApi = {
-  register: (email: string, password: string, full_name?: string) =>
-    request<TokenResponse>('POST', '/auth/register', {
-      body: { email, password, full_name },
-    }),
-
-  login: (email: string, password: string) =>
-    request<TokenResponse>('POST', '/auth/login', { body: { email, password } }),
+  me: () => request<User>('GET', '/auth/me'),
+  updateProfile: (data: { full_name?: string }) =>
+    request<User>('PATCH', '/auth/me', { body: data }),
 }
 
 // ── Boards ────────────────────────────────────────────────────────────────────
 
 export const boardsApi = {
-  list: (token: string) => request<Board[]>('GET', '/boards', { token }),
+  list: () => request<Board[]>('GET', '/boards'),
+  getChapter: (chapterId: number) =>
+    request<any>('GET', `/boards/chapters/${chapterId}`),
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 export const testsApi = {
-  generate: (chapterId: number, numQuestions: number, token: string) =>
+  generate: (chapterId: number, numQuestions: number) =>
     request<GeneratedTest>('POST', '/tests/generate', {
-      token,
       body: { chapter_id: chapterId, num_questions: numQuestions },
     }),
 
-  list: (token: string, skip = 0, limit = 20) =>
-    request<GeneratedTest[]>('GET', `/tests?skip=${skip}&limit=${limit}`, { token }),
+  list: (skip = 0, limit = 20) =>
+    request<GeneratedTest[]>('GET', `/tests?skip=${skip}&limit=${limit}`),
 
-  get: (testId: number, token: string) =>
-    request<GeneratedTest>('GET', `/tests/${testId}`, { token }),
+  get: (testId: number) =>
+    request<GeneratedTest>('GET', `/tests/${testId}`),
 
-  submit: (testId: number, answers: Record<string, string>, token: string) =>
+  submit: (testId: number, answers: Record<string, string>) =>
     request<SubmitTestResponse>('POST', `/tests/${testId}/submit`, {
-      token,
       body: { answers },
     }),
 }
@@ -87,7 +116,27 @@ export const testsApi = {
 // ── Usage ─────────────────────────────────────────────────────────────────────
 
 export const usageApi = {
-  get: (token: string) => request<UsageStatus>('GET', '/usage', { token }),
+  get: () => request<UsageStatus>('GET', '/usage'),
 }
 
-export { ApiError }
+// ── Admin ─────────────────────────────────────────────────────────────────────
+
+export const adminApi = {
+  listUsers: (skip = 0, limit = 50) =>
+    request<User[]>('GET', `/admin/users?skip=${skip}&limit=${limit}`),
+
+  updateUserTier: (userId: string, tier: string) =>
+    request<User>('PATCH', `/admin/users/${userId}/tier?tier=${tier}`),
+
+  listChapters: () =>
+    request<AdminChapter[]>('GET', '/admin/chapters'),
+
+  uploadPdf: (formData: FormData) =>
+    requestFormData<{ job_id: string; chapter_id: number; chapter_name: string; status: string }>(
+      '/admin/upload',
+      formData,
+    ),
+
+  getJobStatus: (jobId: string) =>
+    request<IngestionJob>('GET', `/admin/jobs/${jobId}`),
+}

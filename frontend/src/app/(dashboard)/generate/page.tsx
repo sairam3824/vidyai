@@ -6,15 +6,13 @@ import { Button } from '@/components/ui/Button'
 import { ChapterSelector } from '@/components/test/ChapterSelector'
 import { TestDisplay } from '@/components/test/TestDisplay'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { useAuthStore } from '@/store/authStore'
 import { testsApi, ApiError } from '@/lib/api'
 import type { Chapter, GeneratedTest } from '@/types'
-import { Zap, BookOpen, AlertCircle, Sparkles, Brain, CheckCircle } from 'lucide-react'
+import { Zap, BookOpen, AlertCircle, Sparkles, Brain, CheckCircle, Clock } from 'lucide-react'
 
 const QUESTION_COUNTS = [5, 10, 15, 20]
 
 export default function GeneratePage() {
-  const token = useAuthStore((s) => s.token)!
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null)
   const [numQuestions, setNumQuestions] = useState(10)
   const [generating, setGenerating] = useState(false)
@@ -26,12 +24,14 @@ export default function GeneratePage() {
     setError('')
   }, [])
 
+  const chapterReady = selectedChapter !== null && selectedChapter.chunk_count > 0
+
   async function handleGenerate() {
-    if (!selectedChapter) return
+    if (!selectedChapter || !chapterReady) return
     setGenerating(true)
     setError('')
     try {
-      const test = await testsApi.generate(selectedChapter.id, numQuestions, token)
+      const test = await testsApi.generate(selectedChapter.id, numQuestions)
       setGeneratedTest(test)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err) {
@@ -68,6 +68,7 @@ export default function GeneratePage() {
                   <p className="text-sm text-gray-500 leading-relaxed">
                     Select your board, class, subject and chapter.
                     AI reads your actual textbook and crafts questions in seconds.
+                    Chapters marked <span className="text-emerald-400">✓</span> are ready to test.
                   </p>
                 </div>
               </div>
@@ -82,14 +83,30 @@ export default function GeneratePage() {
 
               <ChapterSelector onChapterSelect={handleChapterSelect} disabled={generating} />
 
-              {selectedChapter && (
-                <div className="flex items-start gap-3 rounded-xl bg-blue-500/10 border border-blue-500/20 p-4 animate-in slide-in-from-bottom-4">
-                  <CheckCircle className="h-4.5 w-4.5 text-blue-400 shrink-0 mt-0.5" />
+              {/* Chapter selected — show status */}
+              {selectedChapter && chapterReady && (
+                <div className="flex items-start gap-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 animate-in slide-in-from-bottom-4">
+                  <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-semibold text-blue-300">{selectedChapter.chapter_name}</p>
+                    <p className="text-sm font-semibold text-emerald-300">{selectedChapter.chapter_name}</p>
                     {selectedChapter.description && (
-                      <p className="text-xs text-blue-400/70 mt-0.5">{selectedChapter.description}</p>
+                      <p className="text-xs text-emerald-400/70 mt-0.5">{selectedChapter.description}</p>
                     )}
+                    <p className="text-xs text-emerald-500/60 mt-1">
+                      {selectedChapter.chunk_count} text chunks indexed
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {selectedChapter && !chapterReady && (
+                <div className="flex items-start gap-3 rounded-xl bg-amber-500/10 border border-amber-500/20 p-4 animate-in slide-in-from-bottom-4">
+                  <Clock className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-amber-300">Content not ready yet</p>
+                    <p className="text-xs text-amber-400/70 mt-0.5">
+                      This chapter hasn't been indexed. Please select a chapter marked ✓.
+                    </p>
                   </div>
                 </div>
               )}
@@ -119,7 +136,7 @@ export default function GeneratePage() {
 
               {error && (
                 <div className="flex items-start gap-3 rounded-xl bg-red-500/10 border border-red-500/20 p-4">
-                  <AlertCircle className="h-4.5 w-4.5 text-red-400 shrink-0 mt-0.5" />
+                  <AlertCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
                   <p className="text-sm text-red-400">{error}</p>
                 </div>
               )}
@@ -128,7 +145,7 @@ export default function GeneratePage() {
                 size="lg"
                 onClick={handleGenerate}
                 loading={generating}
-                disabled={!selectedChapter}
+                disabled={!chapterReady}
                 className="w-full"
               >
                 <Zap className="h-4.5 w-4.5" />

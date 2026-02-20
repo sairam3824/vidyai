@@ -26,17 +26,17 @@ const SUBJECTS = [
 ]
 
 export default function DashboardPage() {
-  const { user, token } = useAuthStore()
+  const { user } = useAuthStore()
   const [usage, setUsage] = useState<UsageStatus | null>(null)
   const [recentTests, setRecentTests] = useState<GeneratedTest[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!token) return
-    Promise.all([usageApi.get(token), testsApi.list(token, 0, 5)])
+    Promise.all([usageApi.get(), testsApi.list(0, 5)])
       .then(([u, t]) => { setUsage(u); setRecentTests(t) })
+      .catch(() => { /* backend not running — still show UI */ })
       .finally(() => setLoading(false))
-  }, [token])
+  }, [])
 
   const avgScore = recentTests.filter(t => t.score !== null).length > 0
     ? recentTests.filter(t => t.score !== null).reduce((a, t) => a + t.score!, 0) /
@@ -77,7 +77,7 @@ export default function DashboardPage() {
                   </h2>
                   <p className="text-blue-200 text-sm max-w-md leading-relaxed">
                     Pick a chapter and generate a test in seconds.
-                    Each question is crafted from your actual CBSE textbooks.
+                    Each question is crafted from your actual CBSE curriculum.
                   </p>
                 </div>
 

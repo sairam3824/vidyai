@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { QuestionCard } from './QuestionCard'
 import { Button } from '@/components/ui/Button'
 import { testsApi, ApiError } from '@/lib/api'
-import { useAuthStore } from '@/store/authStore'
 import type { GeneratedTest, SubmitTestResponse } from '@/types'
 import { cn, scoreBg } from '@/lib/utils'
 import { Trophy, RotateCcw, ChevronRight } from 'lucide-react'
@@ -17,7 +16,6 @@ interface TestDisplayProps {
 
 export function TestDisplay({ test, onReset }: TestDisplayProps) {
   const router = useRouter()
-  const token = useAuthStore((s) => s.token)!
   const questions = test.questions_json.questions ?? []
 
   const [answers, setAnswers] = useState<Record<string, string>>({})
@@ -36,7 +34,7 @@ export function TestDisplay({ test, onReset }: TestDisplayProps) {
     setSubmitting(true)
     setError('')
     try {
-      const res = await testsApi.submit(test.id, answers, token)
+      const res = await testsApi.submit(test.id, answers)
       setResult(res)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err) {

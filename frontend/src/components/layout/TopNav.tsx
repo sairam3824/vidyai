@@ -12,7 +12,8 @@ import {
     User,
     ChevronDown,
     Menu,
-    X
+    X,
+    BookOpen
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -24,6 +25,7 @@ const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/generate', label: 'Generate', icon: Zap },
     { href: '/tests', label: 'My Tests', icon: FileText },
+    { href: '/textbooks', label: 'Curriculum', icon: BookOpen },
 ]
 
 export function TopNav() {

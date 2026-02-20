@@ -6,7 +6,6 @@ import { Header } from '@/components/layout/Header'
 import { TestDisplay } from '@/components/test/TestDisplay'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { Button } from '@/components/ui/Button'
-import { useAuthStore } from '@/store/authStore'
 import { testsApi } from '@/lib/api'
 import type { GeneratedTest } from '@/types'
 import { ArrowLeft } from 'lucide-react'
@@ -14,20 +13,19 @@ import { ArrowLeft } from 'lucide-react'
 export default function TestDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const token = useAuthStore((s) => s.token)!
 
   const [test, setTest] = useState<GeneratedTest | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!token || !id) return
+    if (!id) return
     testsApi
-      .get(Number(id), token)
+      .get(Number(id))
       .then(setTest)
       .catch(() => setError('Test not found or access denied.'))
       .finally(() => setLoading(false))
-  }, [token, id])
+  }, [id])
 
   return (
     <div>

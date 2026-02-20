@@ -68,7 +68,7 @@ export default function LandingPage() {
       </header>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen flex flex-col justify-center pt-16 overflow-hidden">
+      <section id="overview" className="relative min-h-screen flex flex-col justify-center pt-16 overflow-hidden">
 
         {/* Background atmosphere */}
         <div className="absolute inset-0 pointer-events-none">
@@ -388,6 +388,36 @@ export default function LandingPage() {
                 </Link>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── ABOUT ── */}
+      <section id="about" className="relative bg-[#06080F] px-6 py-28 border-t border-white/[0.06]">
+        <div className="mx-auto max-w-4xl text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-8">
+            <GraduationCap className="h-8 w-8 text-blue-400" />
+          </div>
+          <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
+            Democratizing <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Excellence</span>
+          </h2>
+          <p className="text-xl text-gray-400 leading-relaxed mb-10 max-w-2xl mx-auto">
+            We believe every student deserves a personal tutor. Vidyai combines advanced AI with proven pedagogy to make high-quality exam preparation accessible to everyone.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left mt-16">
+            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+              <h3 className="font-bold text-white text-lg mb-2">For Students</h3>
+              <p className="text-sm text-gray-500">Master concepts faster with instant feedback and personalized practice paths.</p>
+            </div>
+            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+              <h3 className="font-bold text-white text-lg mb-2">For Parents</h3>
+              <p className="text-sm text-gray-500">Track progress effortlessly and see exactly where your child needs support.</p>
+            </div>
+            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+              <h3 className="font-bold text-white text-lg mb-2">For Schools</h3>
+              <p className="text-sm text-gray-500">Empower teachers with data-driven insights to help every student succeed.</p>
+            </div>
           </div>
         </div>
       </section>
