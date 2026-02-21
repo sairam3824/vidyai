@@ -23,6 +23,12 @@ export interface Chapter {
   chunk_count: number
 }
 
+export interface ChapterSummary {
+  chapter_id: number
+  chapter_name: string
+  summary: string
+}
+
 export interface Subject {
   id: number
   subject_name: string

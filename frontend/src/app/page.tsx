@@ -18,7 +18,7 @@ export default function LandingPage() {
 
       {/* ── NAV ── */}
       <header className="fixed top-0 left-0 right-0 z-50">
-        <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2.5">
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500 shadow-lg shadow-blue-500/40">
@@ -86,7 +86,7 @@ export default function LandingPage() {
         </div>
 
         {/* Hero content — LEFT ALIGNED like Spotify reference */}
-        <div className="relative mx-auto w-full max-w-7xl px-6 pt-12 pb-0">
+        <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 pt-8 sm:pt-12 pb-0">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[calc(100vh-4rem)]">
 
             {/* Left: Text */}
@@ -98,7 +98,7 @@ export default function LandingPage() {
               </div>
 
               {/* Headline */}
-              <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tighter mb-8">
+              <h1 className="text-5xl sm:text-6xl lg:text-8xl font-black leading-[0.95] tracking-tighter mb-6 sm:mb-8">
                 <span className="text-white block">THE AI</span>
                 <span className="text-white block">TUTOR THAT</span>
                 <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-300 to-cyan-300 animate-shimmer">
@@ -107,7 +107,7 @@ export default function LandingPage() {
                 <span className="text-white block">YOU.</span>
               </h1>
 
-              <p className="text-gray-400 text-lg leading-relaxed max-w-md mb-10">
+              <p className="text-gray-400 text-base sm:text-lg leading-relaxed max-w-md mb-8 sm:mb-10">
                 Generate chapter-specific MCQ tests in seconds.
                 Instant explanations. Track every improvement.
                 Built for CBSE Students.
@@ -234,14 +234,14 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURES ── */}
-      <section id="features" className="relative bg-[#06080F] px-6 py-28">
+      <section id="features" className="relative bg-[#06080F] px-4 sm:px-6 py-16 sm:py-28">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         </div>
         <div className="mx-auto max-w-6xl">
-          <div className="mb-16 max-w-xl">
+          <div className="mb-10 sm:mb-16 max-w-xl">
             <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-3">Why Vidyai</p>
-            <h2 className="text-5xl font-black text-white leading-tight tracking-tight mb-4">
+            <h2 className="text-3xl sm:text-5xl font-black text-white leading-tight tracking-tight mb-4">
               Built different.<br />
               <span className="text-gray-500">For results.</span>
             </h2>
@@ -282,7 +282,7 @@ export default function LandingPage() {
             ].map(({ icon: Icon, title, desc, accent, glow, iconBg, tag }) => (
               <div
                 key={title}
-                className={`group relative rounded-2xl border bg-white/[0.02] p-7 transition-all duration-300 hover:bg-white/[0.04] ${accent} ${glow}`}
+                className={`group relative rounded-2xl border bg-white/[0.02] p-5 sm:p-7 transition-all duration-300 hover:bg-white/[0.04] ${accent} ${glow}`}
               >
                 <div className="flex items-start justify-between mb-5">
                   <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl ${iconBg}`}>
@@ -301,15 +301,15 @@ export default function LandingPage() {
       </section>
 
       {/* ── PRICING ── */}
-      <section id="pricing" className="relative bg-[#06080F] px-6 py-28">
+      <section id="pricing" className="relative bg-[#06080F] px-4 sm:px-6 py-16 sm:py-28">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[300px] rounded-full bg-blue-600/6 blur-[100px]" />
         </div>
         <div className="mx-auto max-w-5xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10 sm:mb-16">
             <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-3">Pricing</p>
-            <h2 className="text-5xl font-black text-white tracking-tight mb-3">
+            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight mb-3">
               Start free. Go unlimited.
             </h2>
             <p className="text-gray-500 text-lg">No surprise charges. Ever.</p>
@@ -347,8 +347,8 @@ export default function LandingPage() {
             ].map((plan) => (
               <div
                 key={plan.name}
-                className={`relative rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1 ${plan.highlight
-                  ? 'bg-blue-500/[0.08] border-2 border-blue-500/50 shadow-[0_0_60px_rgba(59,130,246,0.15)] scale-[1.03]'
+                className={`relative rounded-2xl p-5 sm:p-7 transition-all duration-300 hover:-translate-y-1 ${plan.highlight
+                  ? 'bg-blue-500/[0.08] border-2 border-blue-500/50 shadow-[0_0_60px_rgba(59,130,246,0.15)] sm:scale-[1.03]'
                   : 'bg-white/[0.02] border border-white/[0.07] hover:border-white/[0.14]'
                   }`}
               >
@@ -393,19 +393,19 @@ export default function LandingPage() {
       </section>
 
       {/* ── ABOUT ── */}
-      <section id="about" className="relative bg-[#06080F] px-6 py-28 border-t border-white/[0.06]">
+      <section id="about" className="relative bg-[#06080F] px-4 sm:px-6 py-16 sm:py-28 border-t border-white/[0.06]">
         <div className="mx-auto max-w-4xl text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-8">
             <GraduationCap className="h-8 w-8 text-blue-400" />
           </div>
-          <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
+          <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
             Democratizing <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Excellence</span>
           </h2>
-          <p className="text-xl text-gray-400 leading-relaxed mb-10 max-w-2xl mx-auto">
+          <p className="text-base sm:text-xl text-gray-400 leading-relaxed mb-8 sm:mb-10 max-w-2xl mx-auto">
             We believe every student deserves a personal tutor. Vidyai combines advanced AI with proven pedagogy to make high-quality exam preparation accessible to everyone.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left mt-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-8 text-left mt-10 sm:mt-16">
             <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
               <h3 className="font-bold text-white text-lg mb-2">For Students</h3>
               <p className="text-sm text-gray-500">Master concepts faster with instant feedback and personalized practice paths.</p>
@@ -423,7 +423,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="relative border-t border-white/[0.06] bg-[#06080F] py-12 px-6">
+      <footer className="relative border-t border-white/[0.06] bg-[#06080F] py-10 sm:py-12 px-4 sm:px-6">
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-500">

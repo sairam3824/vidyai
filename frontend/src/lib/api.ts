@@ -1,6 +1,7 @@
 import type {
   AdminChapter,
   Board,
+  ChapterSummary,
   GeneratedTest,
   IngestionJob,
   SubmitTestResponse,
@@ -130,6 +131,8 @@ export const boardsApi = {
   list: () => request<Board[]>('GET', '/boards'),
   getChapter: (chapterId: number) =>
     request<any>('GET', `/boards/chapters/${chapterId}`),
+  generateSummary: (chapterId: number) =>
+    request<ChapterSummary>('POST', `/boards/chapters/${chapterId}/summary`),
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
