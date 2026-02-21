@@ -51,7 +51,7 @@ export default function GeneratePage() {
     <div className="min-h-full bg-[#0D1017]">
       <Header title="Generate Test" subtitle="AI-crafted MCQs from your CBSE textbook" />
 
-      <div className="p-6 max-w-3xl space-y-5">
+      <div className="p-4 sm:p-6 max-w-3xl space-y-5">
         {generatedTest ? (
           <TestDisplay test={generatedTest} onReset={handleReset} />
         ) : (
@@ -122,11 +122,10 @@ export default function GeneratePage() {
                       key={n}
                       onClick={() => setNumQuestions(n)}
                       disabled={generating}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${
-                        numQuestions === n
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${numQuestions === n
                           ? 'bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20'
                           : 'bg-white/[0.03] border-white/[0.08] text-gray-400 hover:bg-white/[0.07] hover:text-gray-200'
-                      }`}
+                        }`}
                     >
                       {n}
                     </button>
@@ -159,7 +158,7 @@ export default function GeneratePage() {
 
             {/* Generating overlay */}
             {generating && (
-              <div className="rounded-2xl bg-[#0E1117] border border-blue-500/20 p-10 flex flex-col items-center gap-5 text-center">
+              <div className="rounded-2xl bg-[#0E1117] border border-blue-500/20 p-6 sm:p-10 flex flex-col items-center gap-5 text-center">
                 <div className="relative">
                   <div className="w-16 h-16 rounded-2xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
                     <Sparkles className="h-8 w-8 text-blue-400 animate-pulse" />
@@ -171,7 +170,7 @@ export default function GeneratePage() {
                   <p className="text-sm text-gray-500">
                     Reading textbook · Finding key concepts · Crafting questions
                   </p>
-                  <p className="text-xs text-gray-600 mt-2">Usually takes 10–20 seconds</p>
+                  <p className="text-xs text-gray-600 mt-2">Usually takes 20-30 seconds</p>
                 </div>
                 <LoadingSpinner size="sm" />
               </div>

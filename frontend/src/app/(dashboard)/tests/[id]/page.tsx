@@ -34,7 +34,7 @@ export default function TestDetailPage() {
         subtitle={test?.subject_name ?? ''}
       />
 
-      <div className="p-6 max-w-3xl">
+      <div className="p-4 sm:p-6 max-w-3xl">
         <Button
           variant="ghost"
           size="sm"
