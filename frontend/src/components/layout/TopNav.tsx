@@ -38,7 +38,7 @@ export function TopNav() {
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-white/[0.06] bg-[#06080F]/80 backdrop-blur-xl">
-            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
                 {/* Logo */}
                 <Link href="/dashboard" className="flex items-center gap-2.5 group">
                     <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-all group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(37,99,235,0.5)]">
@@ -158,7 +158,7 @@ export function TopNav() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden border-b border-white/[0.06] bg-[#06080F] px-6 py-4"
+                        className="md:hidden border-b border-white/[0.06] bg-[#06080F] px-4 sm:px-6 py-4"
                     >
                         <nav className="flex flex-col gap-2">
                             {navItems.map(({ href, label, icon: Icon }) => {
@@ -180,6 +180,19 @@ export function TopNav() {
                                     </Link>
                                 )
                             })}
+                            <Link
+                                href="/profile"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className={cn(
+                                    'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors',
+                                    pathname === '/profile'
+                                        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                        : 'text-gray-400 hover:bg-white/[0.04] hover:text-white'
+                                )}
+                            >
+                                <User className="h-5 w-5" />
+                                Profile
+                            </Link>
                             <div className="my-2 h-px bg-white/[0.06]" />
                             <button
                                 onClick={() => logout()}

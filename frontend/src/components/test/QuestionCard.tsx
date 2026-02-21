@@ -39,7 +39,7 @@ export function QuestionCard({
   return (
     <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-950/5 overflow-hidden">
       {/* Question header */}
-      <div className="px-6 py-4 border-b border-gray-100 flex items-start gap-3">
+      <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-start gap-3">
         <span className="flex items-center justify-center w-7 h-7 rounded-full bg-indigo-600 text-white text-xs font-bold shrink-0 mt-0.5">
           {index + 1}
         </span>
@@ -47,7 +47,7 @@ export function QuestionCard({
       </div>
 
       {/* Options */}
-      <div className="px-6 py-4 space-y-2.5">
+      <div className="px-4 sm:px-6 py-4 space-y-2.5">
         {question.options.map((opt) => {
           const isSelected = resolvedUserAnswer === opt.key
           const isCorrect = opt.key === question.correct_answer
@@ -98,7 +98,7 @@ export function QuestionCard({
 
       {/* Explanation (after submit) */}
       {showResult && (
-        <div className="px-6 py-3 bg-blue-50 border-t border-blue-100 space-y-1.5">
+        <div className="px-4 sm:px-6 py-3 bg-blue-50 border-t border-blue-100 space-y-1.5">
           <p className="text-xs text-gray-700">
             <span className="font-semibold">Your answer:</span> {selectedAnswerLabel}
           </p>

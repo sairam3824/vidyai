@@ -65,7 +65,7 @@ export function TestDisplay({ test, onReset }: TestDisplayProps) {
     return (
       <div className="space-y-8">
         {/* Score card */}
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-950/5 p-8 text-center">
+        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-950/5 p-6 sm:p-8 text-center">
           <div className="flex justify-center mb-4">
             <div className="flex items-center justify-center w-16 h-16 rounded-full bg-indigo-50">
               <Trophy className="h-8 w-8 text-indigo-600" />
@@ -82,7 +82,7 @@ export function TestDisplay({ test, onReset }: TestDisplayProps) {
             {reviewCorrectAnswers} / {reviewTotalQuestions} correct
           </p>
 
-          <div className="flex justify-center gap-3 mt-6">
+          <div className="flex flex-wrap justify-center gap-3 mt-6">
             {onReset && (
               <Button variant="secondary" onClick={onReset}>
                 <RotateCcw className="h-4 w-4" />

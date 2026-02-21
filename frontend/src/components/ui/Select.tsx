@@ -14,7 +14,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={selectId} className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label htmlFor={selectId} className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
             {label}
           </label>
         )}
@@ -22,13 +22,12 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={selectId}
           className={cn(
-            'block w-full rounded-lg border-0 py-2.5 px-3.5 text-gray-900',
-            'ring-1 ring-inset ring-gray-300',
-            'focus:ring-2 focus:ring-inset focus:ring-indigo-600',
-            'text-sm leading-6 transition-shadow duration-150 appearance-none',
-            'bg-white bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3E%3C/svg%3E")] bg-[right_0.75rem_center] bg-[length:1.25rem_1.25rem] bg-no-repeat pr-10',
-            'disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed',
-            error && 'ring-red-300 focus:ring-red-500',
+            'block w-full rounded-xl py-2.5 px-3.5 text-white text-sm leading-6 transition-all duration-150 appearance-none',
+            'bg-white/[0.05] border border-white/[0.08]',
+            'focus:outline-none focus:border-blue-500/60 focus:bg-white/[0.07]',
+            'bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3E%3C/svg%3E")] bg-[right_0.75rem_center] bg-[length:1.25rem_1.25rem] bg-no-repeat pr-10',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            error && 'border-red-500/40 focus:border-red-500/60',
             className,
           )}
           {...props}
