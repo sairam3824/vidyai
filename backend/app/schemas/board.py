@@ -29,6 +29,12 @@ class ChapterContentResponse(ChapterResponse):
     text_chunks: List[TextChunkResponse] = []
 
 
+class ChapterSummaryResponse(BaseModel):
+    chapter_id: int
+    chapter_name: str
+    summary: str
+
+
 class SubjectResponse(BaseModel):
     id: int
     subject_name: str
