@@ -43,14 +43,14 @@ export default function AdminChaptersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Chapters</h1>
           <p className="text-gray-400 text-sm mt-1">{chapters.length} chapters total</p>
         </div>
         <a
           href="/admin/upload"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold transition-colors self-start sm:self-auto"
         >
           + Upload PDF
         </a>
@@ -63,7 +63,8 @@ export default function AdminChaptersPage() {
       )}
 
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[560px]">
           <thead>
             <tr className="border-b border-white/[0.06]">
               <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Chapter</th>
@@ -93,6 +94,7 @@ export default function AdminChaptersPage() {
         {chapters.length === 0 && (
           <div className="px-5 py-12 text-center text-gray-600 text-sm">No chapters yet. Upload a PDF to get started.</div>
         )}
+        </div>
       </div>
     </div>
   )

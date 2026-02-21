@@ -48,12 +48,12 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-full">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Good {getGreeting()}, {firstName} 👋</h1>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Good {getGreeting()}, {firstName} 👋</h1>
         <p className="text-gray-400">Here's your learning overview</p>
       </div>
 
-      <div className="p-6 space-y-5">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
         {loading ? (
           <div className="flex items-center justify-center py-32">
             <LoadingSpinner size="lg" label="Loading…" />
@@ -61,7 +61,7 @@ export default function DashboardPage() {
         ) : (
           <>
             {/* ── HERO BANNER ── */}
-            <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-blue-600 via-blue-700 to-blue-900 p-7">
+            <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-blue-600 via-blue-700 to-blue-900 p-5 sm:p-7">
 
               {/* Glow orb */}
               <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-blue-400/20 blur-3xl" />
@@ -303,7 +303,7 @@ function StatCard({ icon: Icon, accent, label, value, sub, valueClass = '', prog
 }) {
   const a = accentMap[accent] ?? accentMap.blue
   return (
-    <div className="rounded-2xl bg-[#0E1117] border border-white/[0.06] p-5 hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-200">
+    <div className="rounded-2xl bg-[#0E1117] border border-white/[0.06] p-4 sm:p-5 hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-200">
       <div className={`inline-flex items-center justify-center w-10 h-10 rounded-xl ${a.bg} mb-3`}>
         <Icon className={`h-5 w-5 ${a.icon}`} />
       </div>

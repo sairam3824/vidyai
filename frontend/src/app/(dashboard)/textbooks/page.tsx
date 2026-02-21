@@ -111,7 +111,7 @@ export default function TextbooksPage() {
                 {/* Content Area */}
                 <div className="md:col-span-9">
                     {!selectedClass ? (
-                        <div className="h-full flex flex-col items-center justify-center p-12 text-center border border-white/[0.06] rounded-2xl bg-white/[0.02]">
+                        <div className="h-full flex flex-col items-center justify-center p-8 sm:p-12 text-center border border-white/[0.06] rounded-2xl bg-white/[0.02]">
                             <div className="w-16 h-16 rounded-2xl bg-white/[0.04] flex items-center justify-center mb-4">
                                 <Library className="h-8 w-8 text-gray-600" />
                             </div>

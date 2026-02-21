@@ -67,7 +67,8 @@ export default function AdminUsersPage() {
       )}
 
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[600px]">
           <thead>
             <tr className="border-b border-white/[0.06]">
               <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
@@ -104,6 +105,7 @@ export default function AdminUsersPage() {
         {users.length === 0 && (
           <div className="px-5 py-12 text-center text-gray-600 text-sm">No users yet.</div>
         )}
+        </div>
       </div>
     </div>
   )

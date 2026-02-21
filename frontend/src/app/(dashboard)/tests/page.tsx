@@ -27,7 +27,7 @@ export default function TestsPage() {
     <div className="min-h-full bg-[#0D1017]">
       <Header title="My Tests" subtitle="All your generated tests, newest first" />
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <LoadingSpinner size="lg" label="Loading tests…" />

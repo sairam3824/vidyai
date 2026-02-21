@@ -26,7 +26,7 @@ export default function ProfilePage() {
     <div className="min-h-full bg-[#0D1017]">
       <Header title="Profile" subtitle="Manage your account and subscription" />
 
-      <div className="p-6 max-w-2xl space-y-5">
+      <div className="p-4 sm:p-6 max-w-2xl space-y-5">
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <LoadingSpinner size="lg" label="Loading…" />

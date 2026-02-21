@@ -48,7 +48,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right panel — form */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-10 sm:py-12">
         <div className="flex items-center gap-2 mb-8 lg:hidden">
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500">
             <GraduationCap className="h-4 w-4 text-white" strokeWidth={2.5} />
@@ -58,7 +58,7 @@ export default function LoginPage() {
 
         <div className="w-full max-w-md">
           <div className="mb-8">
-            <h1 className="text-3xl font-black text-white mb-1">Sign in</h1>
+            <h1 className="text-2xl sm:text-3xl font-black text-white mb-1">Sign in</h1>
             <p className="text-gray-500">
               Don&apos;t have an account?{' '}
               <Link href="/register" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
@@ -67,7 +67,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="rounded-2xl bg-white/[0.03] border border-white/[0.07] p-8">
+          <div className="rounded-2xl bg-white/[0.03] border border-white/[0.07] p-5 sm:p-8">
             <LoginForm />
           </div>
         </div>
