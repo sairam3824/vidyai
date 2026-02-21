@@ -14,6 +14,7 @@ from app.models.board import Chapter
 from app.models.generated_test import GeneratedTest
 from app.models.question_cache import QuestionCache
 from app.models.user import Profile
+from app.schemas.board import ChapterSummaryResponse
 from app.schemas.test import (
     AnswerDetail,
     GenerateTestRequest,
@@ -54,6 +55,23 @@ Output schema:
     }
   ]
 }
+"""
+
+_SUMMARY_SYSTEM_PROMPT = """\
+You are an expert CBSE teacher.
+Create a concise, student-friendly chapter summary using ONLY the provided context.
+
+Rules:
+- Do not add facts that are not present in the context.
+- Keep the summary between 150 and 220 words.
+- Use exactly these markdown headings:
+  1. Key Ideas
+  2. Important Formulas/Rules
+  3. Exam Tips
+- In "Important Formulas/Rules", use bullet points.
+- Keep language suitable for Class 10 students.
+
+Return only the summary text.
 """
 
 
@@ -159,6 +177,58 @@ class GenerationService:
         self.db.refresh(test)
 
         return self._to_response(test, chapter.chapter_name, chapter.subject.subject_name)
+
+    def generate_chapter_summary(self, chapter_id: int) -> ChapterSummaryResponse:
+        chapter = self.db.query(Chapter).filter(Chapter.id == chapter_id).first()
+        if not chapter:
+            raise NotFoundError("Chapter")
+
+        try:
+            embedded_chunks = self.rag.ensure_chapter_embeddings(
+                chapter_id=chapter.id,
+                pdf_s3_key=chapter.pdf_s3_key,
+            )
+        except Exception as exc:
+            logger.error(
+                "Failed to auto-generate embeddings for chapter %d: %s",
+                chapter.id,
+                exc,
+                exc_info=True,
+            )
+            raise GenerationError(
+                "Failed to prepare chapter embeddings. Please retry."
+            )
+
+        if embedded_chunks == 0:
+            raise GenerationError(
+                "No embeddings found for this chapter. Please upload/reprocess the chapter PDF first."
+            )
+
+        if chapter.status != "ready" or chapter.error_message:
+            chapter.status = "ready"
+            chapter.error_message = None
+            self.db.commit()
+
+        rag_query = (
+            f"Create a chapter summary for {chapter.chapter_name} with key concepts, "
+            "important formulas, and exam-focused revision points."
+        )
+        context = self.rag.retrieve_context(chapter.id, rag_query)
+        if not context:
+            raise GenerationError(
+                "Failed to retrieve chapter context from embeddings. Please retry."
+            )
+
+        summary = self._call_openai_summary(
+            context=context,
+            chapter_name=chapter.chapter_name,
+        )
+
+        return ChapterSummaryResponse(
+            chapter_id=chapter.id,
+            chapter_name=chapter.chapter_name,
+            summary=summary,
+        )
 
     # ── Read ─────────────────────────────────────────────────────────────
 
@@ -321,6 +391,36 @@ class GenerationService:
         except Exception as exc:
             logger.error(f"OpenAI API error: {exc}", exc_info=True)
             raise GenerationError(f"AI generation failed: {exc}")
+
+    def _call_openai_summary(
+        self,
+        context: str,
+        chapter_name: str,
+    ) -> str:
+        user_msg = (
+            f"Chapter: {chapter_name}\n\n"
+            f"Context:\n{context}\n\n"
+            "Generate the chapter summary now."
+        )
+        try:
+            response = self.client.chat.completions.create(
+                model=settings.OPENAI_CHAT_MODEL,
+                messages=[
+                    {"role": "system", "content": _SUMMARY_SYSTEM_PROMPT},
+                    {"role": "user", "content": user_msg},
+                ],
+                temperature=0.4,
+                max_tokens=900,
+            )
+            content = response.choices[0].message.content
+            if not content or not content.strip():
+                raise GenerationError("AI returned an empty summary. Please retry.")
+            return content.strip()
+        except GenerationError:
+            raise
+        except Exception as exc:
+            logger.error(f"OpenAI API error while generating summary: {exc}", exc_info=True)
+            raise GenerationError(f"AI summary generation failed: {exc}")
 
     def _get_owned_test(self, test_id: int, user_id: int) -> GeneratedTest:
         test = (
