@@ -226,8 +226,8 @@ export default function AdminUploadPage() {
         </div>
 
         {/* Chapter Name + Number */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="sm:col-span-2">
             <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Chapter Name</label>
             <input
               type="text"
