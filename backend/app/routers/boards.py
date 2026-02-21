@@ -11,7 +11,8 @@ from app.models.board import Board, Class, Subject, Chapter
 from app.models.text_chunk import TextChunk
 from app.models.user import Profile
 from app.routers.deps import get_current_user
-from app.schemas.board import BoardResponse, ChapterContentResponse
+from app.schemas.board import BoardResponse, ChapterContentResponse, ChapterSummaryResponse
+from app.services.generation_service import GenerationService
 
 router = APIRouter(prefix="/boards", tags=["Curriculum"])
 
@@ -113,3 +114,13 @@ def get_chapter(
         raise HTTPException(status_code=404, detail="Chapter not found")
         
     return chapter
+
+
+@router.post("/chapters/{chapter_id}/summary", response_model=ChapterSummaryResponse)
+def generate_chapter_summary(
+    chapter_id: int,
+    db: Session = Depends(get_db),
+    _: Profile = Depends(get_current_user),
+) -> ChapterSummaryResponse:
+    """Generate an AI summary for a chapter using RAG context."""
+    return GenerationService(db).generate_chapter_summary(chapter_id)
